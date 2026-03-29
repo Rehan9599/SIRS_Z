@@ -1,0 +1,241 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+  background: linear-gradient(90deg, #0a0f2c, #0b1b3d);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  color: #60a5fa;
+}
+.menu {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+}
+.menu a {
+  text-decoration: none;
+  color: white;
+  font-size: 16px;
+  transition: 0.3s;
+  position: relative;
+}
+.menu a:hover {
+  color: #60a5fa;
+}
+.menu a::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 0%;
+  height: 2px;
+  background: #3b82f6;
+  transition: 0.3s;
+  transform: translateX(-50%);
+}
+.menu a:hover::after {
+  width: 100%;
+}
+.call-btn { 
+  background: linear-gradient(45deg, #2563eb, #3b82f6);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 500;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+  transition: 0.3s;
+ }
+.call-btn:hover {
+   transform: scale(1.05);
+}
+call-btn {
+   background: linear-gradient(45deg, #2563eb, #3b82f6); color: white;
+}
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 80px 40px;
+  background: radial-gradient(circle at right, #0b1b3d, #020617);
+  color: white;
+  min-height: 90vh;
+  gap: 50px;
+}
+.hero-left {
+  max-width: 50%;
+}
+.tag {
+  background: rgba(255,255,255,0.1);
+  display: inline-block;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+.hero h1 {
+  font-size: 48px;
+  line-height: 1.2;
+}
+.hero h1 span {
+  color: #3b82f6;
+}
+.desc {
+  margin: 20px 0;
+  color: #cbd5f5;
+}
+.features {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  color: #94a3b8;
+}
+.hero-right {
+  padding-right: 40px;
+}
+.hero-right img {
+  width: 450px;
+  border-radius: 15px;
+  filter: drop-shadow(0 0 30px rgba(59,130,246,0.4));
+}
+.buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+.btn {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  background: transparent;
+  color: white;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+/* Hover pe blue glow */
+.btn:hover {
+  background: linear-gradient(45deg, #2563eb, #3b82f6);
+  border: none;
+  box-shadow: 0 0 15px rgba(59,130,246,0.7);
+  transform: scale(1.05);
+}
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0b1220;
+  color: white;
+}
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 20px;
+}
+.services {
+  padding: 60px 0;
+  text-align: center;
+}
+
+.subtitle {
+  color: #9ca3af;
+  margin-bottom: 30px;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.card {
+  background: rgba(255,255,255,0.05);
+  padding: 20px;
+  border-radius: 15px;
+  transition: 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+}
+
+/* HOVER EFFECT */
+.card:hover {
+  transform: translateY(-15px);
+  box-shadow: 0 10px 30px rgba(0, 140, 255, 0.5);
+  border-color: rgba(0,140,255,0.6);
+}
+
+/* BUTTON */
+.card button {
+  margin-top: 15px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  cursor: pointer;
+}
+.why {
+  padding: 60px 0;
+}
+.why-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+.why-left,
+.why-right {
+  background: rgba(255,255,255,0.05);
+  padding: 25px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.feature {
+  background: rgba(255,255,255,0.08);
+  padding: 12px;
+  border-radius: 10px;
+}
+
+/* CALL BUTTON */
+.call-btn {
+  margin-top: 20px;
+  padding: 12px;
+  width: auto;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  cursor: pointer;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .why-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 500px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}

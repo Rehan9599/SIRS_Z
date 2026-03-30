@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sell an Appliance</title>
+    <style>
+        html, body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #050b14;
+            color: #ffffff;
+            padding-top: 80px;
+            max-width: 100%;
+            overflow-x: hidden; 
+        }
+        .main-header {
+            background-color: #0b1320;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;  
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;  
+            z-index: 1000;
+        }
+
+        .main-header .logo {
+            color: #5c93fa;
+            font-size: 26px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .main-header .nav-links {
+            display: flex;
+            gap: 35px;
+        }
+
+        .main-header .nav-links a {
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 16px;
+            position: relative;
+            padding-bottom: 5px;
+        }
+
+        .main-header .nav-links a::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            width: 0;
+            height: 2px;
+            background-color: #5c93fa;
+            transform: translateX(-50%);
+            transition: width 0.3s ease;
+        }
+
+        .main-header .nav-links a:hover::after,
+        .main-header .nav-links a.active::after {
+            width: 100%;
+        }
+
+        .main-header .call-btn {
+            background-color: #3b71f7;
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .main-header .call-btn:hover {
+            background-color: #2a5de3;
+            transform: scale(1.05);
+        }
+
+        /* --- SELL FORM STYLES --- */
+        .form-container {
+            max-width: 600px;
+            margin: 60px auto;
+            background: #121b2a;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            border: 1px solid #2a3b52;
+        }
+
+        .form-header-title {
+            font-size: 28px;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #d1d8e0;
+        }
+
+        input[type="text"], 
+        input[type="number"], 
+        select, 
+        textarea {
+            width: 100%;
+            padding: 14px;
+            background-color: #050b14;
+            color: #ffffff;
+            border: 1px solid #2a3b52;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 15px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, 
+        select:focus, 
+        textarea:focus {
+            outline: none;
+            border-color: #3b71f7;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 120px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background-color: #3b71f7;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: #2a5de3;
+            transform: translateY(-2px);
+        }
+
+        /* --- FOOTER STYLES --- */
+        .site-footer {
+            background-color: #0b1320;
+            padding: 60px 20px 20px;
+            border-top: 1px solid #1e3c60;
+            color: #d1d8e0;
+            margin-top: 60px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-col h3 {
+            color: #ffffff;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .footer-col p {
+            line-height: 1.6;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .footer-col ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-col ul li a {
+            color: #d1d8e0;
+            text-decoration: none;
+            font-size: 15px;
+            transition: color 0.2s;
+        }
+
+        .footer-col ul li a:hover {
+            color: #5c93fa;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #1e3c60;
+            font-size: 14px;
+            color: #8892a0;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <a href="index.html" class="logo">ReadyCool Service</a>
+        
+        <nav class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="index.html#services">Services</a>
+            <a href="index.html#about">About</a>
+            <a href="index.html#contact">Contact</a>
+        </nav>
+
+        <button class="call-btn">Call Now</button>
+    </header>
+
+    <div class="form-container">
+        <h2 class="form-header-title">Post Your Ad</h2>
+        <form id="sellForm" onsubmit="submitAd(event)">
+            <div class="form-group">
+                <label for="adTitle">Appliance Name / Title</label>
+                <input type="text" id="adTitle" placeholder="e.g. LG Refrigerator 260L" required>
+            </div>
+
+            <div class="form-group">
+                <label for="price">Expected Price (₹)</label>
+                <input type="number" id="price" placeholder="e.g. 10000" required>
+            </div>
+
+            <div class="form-group">
+                <label for="condition">Condition</label>
+                <select id="condition" required>
+                    <option value="" disabled selected>Select condition</option>
+                    <option value="Like New">Like New (0-6 months used)</option>
+                    <option value="Good">Good (1-2 years used)</option>
+                    <option value="Fair">Fair (Heavy usage, but working)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Additional Details</label>
+                <textarea id="description" placeholder="Mention warranty, defects, reason for selling..." required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="image">Upload Image</label>
+                <input type="file" id="image" accept="image/*" style="padding: 10px; background: transparent; border: none;">
+            </div>
+
+            <button type="submit" class="submit-btn">Post Ad Now</button>
+        </form>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3>ReadyCool Service</h3>
+                <p>Your trusted marketplace for premium second-hand appliances. Quality and reliability guaranteed.</p>
+            </div>
+            <div class="footer-col">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="buy.html">Buy Appliances</a></li>
+                    <li><a href="sell.html">Sell Appliances</a></li>
+                    <li><a href="index.html#services">Services</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Contact Us</h3>
+                <p>Email: support@readycoolservice.com</p>
+                <p>Phone: +91 98765 43210</p>
+                <p>Location: 123, Service Lane, New Delhi, Delhi 110001</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 ReadyCool Service. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function submitAd(event) {
+            event.preventDefault(); 
+            alert("Your appliance has been listed successfully!");
+            document.getElementById('sellForm').reset(); 
+        }
+    </script>
+
+</body>
+</html>

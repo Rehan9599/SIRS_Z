@@ -8,6 +8,7 @@ import Header from "../components/Header";
 export default function Login(props) {
 	const navigate = useNavigate();
 	const [showPassword, setShowPassword] = useState(false);
+	const [isUser, setIsUser]=useState(false);
 	const [formData, setFormData]= useState({
 		email:"",
 		password:""
@@ -28,8 +29,17 @@ export default function Login(props) {
 				}
 			);
 			console.log("Login success:", response.data);
-			props.setIsLogged(true);
-			navigate("/");
+			if(response.data.message=="yooooo"){
+				props.setIsLogged(true);
+			    navigate("/");
+			}else{
+				setFormData({
+		        email:" ",
+		        password:" "
+	            });
+				setIsUser(true);
+				navigate("/login");
+			}
 		} catch (error) {
 			if (error.response) {
 				console.log("Server responded with error:", error.response.data, error.response.status);
@@ -88,6 +98,11 @@ export default function Login(props) {
 				<button type="submit" className="auth-btn" style={{ marginTop: 18, background: "linear-gradient(90deg, #2563eb, #1d4ed8)", fontWeight: 700, fontSize: 18 }}>
 					Login
 				</button>
+				{isUser && 
+				<p style={{ textAlign: "center", color: "red", marginBottom: 16 }}>
+					user not found
+				</p>
+				}
 				<p style={{ textAlign: "center", marginTop: 18, color: "#555" }}>
 					Don&apos;t have an account? <a href="/signup" style={{ color: "#2563eb", textDecoration: "underline" }}>Sign up</a>
 				</p>

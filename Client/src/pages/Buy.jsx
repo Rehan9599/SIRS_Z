@@ -25,7 +25,7 @@ function Buy(props) {
 				title: i.item_name,
 		        price: "Rs "+i.price,
 		        details: i.description,
-		        image: ""
+		        image: i.imageUrl
 			}));
 			setProducts(itemArray);
 			console.log("items:", response.data);
@@ -50,7 +50,13 @@ function Buy(props) {
 				<div className="product-grid">
 					{products.map((p, i) => (
 						<div className="product-card" key={i} onClick={() => openModal(p)}>
-							<div className="product-image">{p.image}</div>
+							<div className="product-image">
+								<img
+									src={p.image ? `http://localhost:5000${p.image}` : "/no-image.png"}
+									alt={p.title}
+									style={{ maxWidth: "100%", maxHeight: "200px" }}
+								/>
+							</div>
 							<div className="product-info">
 								<div className="product-price">{p.price}</div>
 								<div className="product-title">{p.title}</div>
@@ -59,6 +65,7 @@ function Buy(props) {
 					))}
 				</div>
 			</div>
+			
 
 			<section className="info-section">
 				<h2 className="section-title">Why Buy From Us?</h2>

@@ -1,4 +1,6 @@
 const dotenv=require("dotenv");
+const multer = require('multer');
+const path = require('path');
 const express = require("express");
 const cors = require("cors");
 
@@ -8,6 +10,20 @@ const PORT = 5000;
 
 app.use(cors());
 app.use(express.json());
+
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, 'uploads'));
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ storage });
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+console.log(path.join(__dirname, 'uploads'));
 
 const mysql = require('mysql2/promise');
 
@@ -52,11 +68,11 @@ async function addUsers(name,email,password) {
     console.error(err);
   }
 }
-async function postItems(id,item,description,price,quantity,status) {
+async function postItems(id,item,description,price,quantity,status,imageUrl) {
   try {
     const [rows] = await pool.execute(
-      'INSERT INTO Sell (user_id, item_name, description, price, quantity, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [id,item,description,price,quantity,status]
+      'INSERT INTO sell (user_id, item_name, description, price, quantity, status, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id,item,description,price,quantity,status,imageUrl]
     );
     return rows;
   } catch (err) {
@@ -115,15 +131,29 @@ app.post("/signup", async(req,res)=>{
 });
 
 
-app.post("/sell", async(req,res)=>{
+
+
+app.post("/sell", upload.single("image"), async (req, res) => {
   try {
-    const {id,item,description,price,quantity,status}= await req.body;
-    const rows= await postItems(id,item,description,price,quantity,status);
-    res.json({message:"posted", item: rows[0]});
+    const { id, item, description, price, quantity, status } = req.body;
+    console.log(req.file);
+    const imageUrl = req.file
+      ? `/uploads/${req.file.filename}`
+      : null;
+
+    const rows= await postItems(id,item,description,price,quantity,status,imageUrl);
+    res.json({
+      message: "posted",
+      insertedId: rows.insertId,
+      imageUrl
+    });
+
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
+
+
 
 app.get("/buy", async(req,res)=>{
   try {

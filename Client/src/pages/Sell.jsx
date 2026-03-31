@@ -12,7 +12,7 @@ function Sell(props) {
 		price: "",
 		condition: "",
 		description: "",
-		image: null
+		image: ""
 	});
 
 	const handleChange = (e) => {
@@ -34,7 +34,9 @@ function Sell(props) {
 				status: formData.condition,
 				description: formData.description,
 				quantity: 1,
-			}
+				image: formData.image
+			},
+			{ headers: { 'Content-Type': 'multipart/form-data' } }
 			);
 			console.log("sold:", response.data);
 		} catch (error) {

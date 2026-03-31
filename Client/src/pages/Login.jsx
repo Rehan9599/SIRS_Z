@@ -31,6 +31,7 @@ export default function Login(props) {
 			console.log("Login success:", response.data);
 			if(response.data.message=="yooooo"){
 				props.setIsLogged(true);
+				props.setIsLoggedId(response.data.userId);
 			    navigate("/");
 			}else{
 				setFormData({

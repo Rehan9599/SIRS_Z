@@ -1,31 +1,13 @@
-import React, { useState } from "react";
+import React, { useState,useEffect} from "react";
 import "./buySell.css";
+import axios from "axios";
 import Header from "../components/Header";
 import Footer from"../components/Footer";
-const products = [
-	{
-		title: "Double Door Refrigerator",
-		price: "₹12,500",
-		details: "LG 260L Frost Free. 2 years used. Excellent cooling, slight scratch on the side. Reason for selling: Upgrading.",
-		image: "[Fridge Image]"
-	},
-	{
-		title: "Washing Machine (Front Load)",
-		price: "₹15,000",
-		details: "Samsung 6.5kg Fully Automatic. 1.5 years used. Works perfectly, motor still under warranty.",
-		image: "[Washer Image]"
-	},
-	{
-		title: "Microwave Oven",
-		price: "₹3,200",
-		details: "IFB 20L Convection. 3 years used. Good condition, includes baking tray.",
-		image: "[Microwave Image]"
-	}
-];
+
 
 function Buy(props) {
 	const [modal, setModal] = useState({ open: false, product: null });
-
+	const [products, setProducts]= useState([]);
 	const openModal = (product) => {
 		setModal({ open: true, product });
 	};
@@ -33,6 +15,34 @@ function Buy(props) {
 		setModal({ open: false, product: null });
 	};
 
+	async function getItems(){
+		try {
+			const response = await axios.get(
+				`http://localhost:5000/buy?id=${props.isLoggedId}`,{}
+			);
+			const itemArray=response.data.items.map((i,j) => ({
+				key:j,
+				title: i.item_name,
+		        price: "Rs "+i.price,
+		        details: i.description,
+		        image: ""
+			}));
+			setProducts(itemArray);
+			console.log("items:", response.data);
+		} catch (error) {
+			if (error.response) {
+				console.log("Server responded with error:", error.response.data, error.response.status);
+			} else if (error.request) {
+				console.log("No response received:", error.request);
+			} else {
+				console.log("Error setting up request:", error.message);
+			}
+		}
+	};
+	useEffect(()=>{
+       getItems();
+	},[]);
+	
 	return (
 		<div style={{ background: "#050b14", minHeight: "100vh", color: "#fff"}}>
 			<Header showAuth={props.isLogged} />

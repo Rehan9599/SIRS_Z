@@ -30,7 +30,17 @@ async function getUsers() {
     console.error(err);
   }
 }
-
+async function getItems(id) {
+  try {
+    const [rows] = await pool.execute(
+      'SELECT * FROM sell where user_id != (?)',
+      [id]
+    );
+    return rows;
+  } catch (err) {
+    console.error(err);
+  }
+}
 async function addUsers(name,email,password) {
   try {
     const [rows] = await pool.execute(
@@ -42,6 +52,19 @@ async function addUsers(name,email,password) {
     console.error(err);
   }
 }
+async function postItems(id,item,description,price,quantity,status) {
+  try {
+    const [rows] = await pool.execute(
+      'INSERT INTO Sell (user_id, item_name, description, price, quantity, status) VALUES (?, ?, ?, ?, ?, ?)',
+      [id,item,description,price,quantity,status]
+    );
+    return rows;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
 async function authUsers(email,password) {
   try {
     const [rows] = await pool.execute(
@@ -54,8 +77,11 @@ async function authUsers(email,password) {
     return null;
   }
 }
-
 getUsers();
+
+
+
+
 app.get("/", (req, res) => {
   res.json({ message: "Server is running" });
 });
@@ -69,8 +95,8 @@ app.post("/login", async(req,res)=>{
     const { email, password } = req.body;
     const rows = await authUsers(email, password);
     if (rows && rows.length > 0) {
-      res.send
-      res.json({ message: "yooooo" });
+      console.log(rows[0].userID);
+      res.json({ message: "yooooo", userId: rows[0].userID});
     } else {
       res.json({ mess: "nooooooo" });
     }
@@ -87,6 +113,30 @@ app.post("/signup", async(req,res)=>{
     res.status(400).json({ error: err.message });
   }
 });
+
+
+app.post("/sell", async(req,res)=>{
+  try {
+    const {id,item,description,price,quantity,status}= await req.body;
+    const rows= await postItems(id,item,description,price,quantity,status);
+    res.json({message:"posted", item: rows[0]});
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get("/buy", async(req,res)=>{
+  try {
+    const id = await req.query.id;
+    console.log("current id", id);
+    const rowsItems= await getItems(id);
+    res.json({message:"listed",items: rowsItems});
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
 
 app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`);

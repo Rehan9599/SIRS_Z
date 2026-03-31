@@ -1,17 +1,18 @@
-import Header from './Header';
+import Header from '../../components/Header';
 import React, { useState } from "react";
 import Hero from './Hero';
 import Services from './Services';
 import WhyChoose from './Whychoose';
-import Footer from './Footer';
+import Footer from '../../components/Footer';
 import './Home.css';
 
-function Home() {
-  const [auth,SetAuth]=useState(true);
+function Home(props) {
+  
   return (
     <div className="home-layout">
       <div className="header-fullwidth">
-        <Header showAuthButtons={auth} page='home' />
+        {console.log(props.isLogged)}
+        <Header showAuth={props.isLogged} />
       </div>
 
       <div className="home-content">

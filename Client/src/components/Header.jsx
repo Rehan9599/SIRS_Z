@@ -8,11 +8,19 @@ function Header(props) {
         <h1>ReadyCool</h1>
       </div>
       <nav className="nav">
-        {props.page=='home' && <a href="/">Home</a>}
-        <a href="/services">Services</a>
-        <a href="/about">About</a>
-        <a href="/contact">Contact</a>
-        {props.showAuthButtons && (
+        {(props.page!='login'||props.page!='signup') && <Link to="/">Home</Link>}
+        {props.showAuth? (
+          (props.page!='login'&&props.page!='signup') && 
+          <>
+          <Link to="/buy">Buy</Link>
+          <Link to="/sell">Sell</Link>
+          </>
+         ): " "}
+        {props.showAuth? (
+          <>
+            <Link to="/login"><button>Logout</button></Link>
+          </>
+        ): (
           <>
             <Link to="/signup"><button>Sign Up</button></Link>
             <Link to="/login"><button>Login</button></Link>

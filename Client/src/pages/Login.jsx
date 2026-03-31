@@ -2,23 +2,48 @@
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 import { FiMail, FiLock } from "react-icons/fi";
-import Header from "./Home/Header";
+import axios from "axios";
+import Header from "../components/Header";
 
-export default function Login() {
+export default function Login(props) {
 	const navigate = useNavigate();
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
-
-	const handleSubmit = (e) => {
+	const [formData, setFormData]= useState({
+		email:"",
+		password:""
+	});
+	const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+	const handleSubmit = async (e) => {
 		e.preventDefault();
-		// Here you would normally validate credentials
-		navigate("/");
+		try {
+			const response = await axios.post(
+				"http://localhost:5000/login", {
+					email: formData.email,
+					password: formData.password
+				}
+			);
+			console.log("Login success:", response.data);
+			props.setIsLogged(true);
+			navigate("/");
+		} catch (error) {
+			if (error.response) {
+				console.log("Server responded with error:", error.response.data, error.response.status);
+			} else if (error.request) {
+				console.log("No response received:", error.request);
+			} else {
+				console.log("Error setting up request:", error.message);
+			}
+		}
 	};
 
 	return (
 		<div style={{ minHeight: "100vh", display: "flex", flexDirection: "column"}}>
-			<Header />
+			<Header showAuth={props.isLogged} page="login"/>
 			<form className="form auth-form" onSubmit={handleSubmit} style={{ marginTop: 48, boxShadow: "0 4px 32px rgba(37,99,235,0.10)", background: "#fff" }}>
 				<h2 className="form-title" style={{ color: "#2563eb" }}>Welcome back</h2>
 				<p style={{ textAlign: "center", color: "#5c6678", marginBottom: 16 }}>
@@ -30,10 +55,10 @@ export default function Login() {
 					<input
 						id="login-email"
 						type="email"
+						name="email"
 						placeholder="you@example.com"
 						required
-						value={email}
-						onChange={e => setEmail(e.target.value)}
+						onChange={handleChange}
 						style={{ paddingLeft: 36, border: "1.5px solid #e0e7ef", borderRadius: 8, height: 38, background: "#f6f8fa", color: "#17304a", fontSize: 15, marginBottom: 8 }}
 					/>
 				</div>
@@ -43,11 +68,11 @@ export default function Login() {
 					<FiLock style={{ position: "absolute", left: 12, top: 12, color: "#2563eb" }} />
 					<input
 						id="login-password"
+						name="password"
 						type={showPassword ? "text" : "password"}
 						placeholder="Enter password"
 						required
-						value={password}
-						onChange={e => setPassword(e.target.value)}
+						onChange={handleChange}
 						style={{ paddingLeft: 36, border: "1.5px solid #e0e7ef", borderRadius: 8, height: 38, background: "#f6f8fa", color: "#17304a", fontSize: 15, marginBottom: 8 }}
 					/>
 					<button

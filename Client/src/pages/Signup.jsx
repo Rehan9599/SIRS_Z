@@ -1,6 +1,6 @@
 
-
-import Header from "./Home/Header";
+import axios from "axios";
+import Header from "../components/Header";
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 import { FiMail, FiLock, FiUser } from "react-icons/fi";
@@ -12,15 +12,32 @@ export default function Signup() {
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 
-	const handleSubmit = (e) => {
+	const handleSubmit = async (e) => {
 		e.preventDefault();
-		// Here you would normally handle signup logic
-		navigate("/login");
+		try {
+			const response = await axios.post(
+				"http://localhost:5000/signup", {
+					name: name,
+					email: email,
+					password: password
+				}
+			);
+			console.log("Signup success:", response.data);
+			navigate("/login");
+		} catch (error) {
+			if (error.response) {
+				console.log("Server responded with error:", error.response.data, error.response.status);
+			} else if (error.request) {
+				console.log("No response received:", error.request);
+			} else {
+				console.log("Error setting up request:", error.message);
+			}
+		}
 	};
 
 	return (
 		<div style={{ minHeight: "100vh", display: "flex", flexDirection: "column"}}>
-			<Header />
+			<Header page="signup"/>
 			<form className="form auth-form" onSubmit={handleSubmit} style={{ marginTop: 48, boxShadow: "0 4px 32px rgba(37,99,235,0.10)", background: "#fff" }}>
 				<h2 className="form-title" style={{ color: "#2563eb" }}>Create account</h2>
 				<p style={{ textAlign: "center", color: "#5c6678", marginBottom: 16 }}>

@@ -1,42 +1,41 @@
-# SIRS_Z Frontend
+# SIRS_Z Project
 
-This repository currently documents the frontend application only.
+This repository contains both the frontend and backend applications.
 
-## Tech Stack
+---
 
-- React
-- Vite
+## Frontend
 
-## Frontend Location
+**Location:** `Client` folder
 
-The frontend code lives in the `Client` folder.
+**Tech Stack:** React, Vite
 
-## Prerequisites
-
+### Prerequisites
 - Node.js 18+ (recommended)
 - npm 9+
 
-## Run Frontend Locally
-
+### Run Frontend Locally
 1. Go to the frontend folder:
-
 	```bash
 	cd Client
 	```
-
 2. Install dependencies:
-
 	```bash
 	npm install
 	```
-
 3. Start the development server:
-
 	```bash
 	npm run dev
 	```
-
 4. Open the local URL shown in terminal (usually `http://localhost:5173`).
+
+---
+
+## Backend
+
+**Location:** `Server` folder
+
+See [Server/README.md](Server/README.md) for backend setup, environment variables, and Aiven/MySQL connection instructions.
 
 ## Build Frontend
 
@@ -57,14 +56,20 @@ npm run preview
 
 ```text
 Client/
-  src/
-	 App.jsx
-	 main.jsx
-	 styles.css
-	 pages/
-		Login.jsx
-		Signup.jsx
-  index.html
+	src/
+		App.jsx
+		main.jsx
+		styles.css
+		pages/
+			Login.jsx
+			Signup.jsx
+	index.html
+
+Server/
+	index.js
+	package.json
+	README.md
+	# .env (not committed)
 ```
 
 ## Notes

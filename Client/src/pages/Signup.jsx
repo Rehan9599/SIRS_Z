@@ -1,105 +1,268 @@
 
 import axios from "axios";
+import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
-import { FiMail, FiLock, FiUser } from "react-icons/fi";
+import AlternateEmailOutlinedIcon from "@mui/icons-material/AlternateEmailOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
+import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
+import API_BASE_URL from "../api";
+import "../styles/auth.css";
 
-export default function Signup() {
+export default function Signup(props) {
 	const navigate = useNavigate();
-	const [name, setName] = useState("");
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
+	const [formData, setFormData] = useState({
+		name: "",
+		email: "",
+		password: "",
+		phone: "",
+		companyName: "",
+		jobRole: "",
+		city: "",
+		addressLine: ""
+	});
 	const [showPassword, setShowPassword] = useState(false);
+	const [errorMessage, setErrorMessage] = useState("");
+
+	const handleChange = (event) => {
+		const { name, value } = event.target;
+		setFormData((previous) => ({ ...previous, [name]: value }));
+	};
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
 			const response = await axios.post(
-				"http://localhost:5000/signup", {
-					name: name,
-					email: email,
-					password: password
+				`${API_BASE_URL}/signup`, {
+					name: formData.name,
+					email: formData.email,
+					password: formData.password,
+					phone: formData.phone,
+					companyName: formData.companyName,
+					jobRole: formData.jobRole,
+					city: formData.city,
+					addressLine: formData.addressLine
 				}
 			);
-			console.log("Signup success:", response.data);
-			navigate("/login");
+			if (response.status === 201 || response.data.message === "signup_success") {
+				navigate("/login");
+				return;
+			}
+			setErrorMessage(response.data?.message || "Unable to create your account.");
 		} catch (error) {
 			if (error.response) {
-				console.log("Server responded with error:", error.response.data, error.response.status);
+				setErrorMessage(error.response.data?.message || "Unable to create your account.");
 			} else if (error.request) {
-				console.log("No response received:", error.request);
+				setErrorMessage("The server did not respond.");
 			} else {
-				console.log("Error setting up request:", error.message);
+				setErrorMessage(error.message);
 			}
 		}
 	};
 
 	return (
-		<div style={{ minHeight: "100vh", display: "flex", flexDirection: "column"}}>
-			<Header page="signup"/>
-			<form className="form auth-form" onSubmit={handleSubmit} style={{ marginTop: 48, boxShadow: "0 4px 32px rgba(37,99,235,0.10)", background: "#fff" }}>
-				<h2 className="form-title" style={{ color: "#2563eb" }}>Create account</h2>
-				<p style={{ textAlign: "center", color: "#5c6678", marginBottom: 16 }}>
-					Fill in the details below to create your account.
-				</p>
-				<label htmlFor="signup-name" style={{ color: "#b0b8c9", fontWeight: 600 }}>Full Name</label>
-				<div style={{ position: "relative" }}>
-					<FiUser style={{ position: "absolute", left: 12, top: 12, color: "#2563eb" }} />
-					<input
-						id="signup-name"
-						type="text"
-						placeholder="John Doe"
-						required
-						value={name}
-						onChange={e => setName(e.target.value)}
-						style={{ paddingLeft: 36, border: "1.5px solid #e0e7ef", borderRadius: 8, height: 38, background: "#f6f8fa", color: "#17304a", fontSize: 15, marginBottom: 8 }}
-					/>
-				</div>
+		<div className="auth-page">
+			<Header page="signup" onLogout={props.onLogout} />
+			<main className="auth-shell">
+				<aside className="auth-visual">
+					<div className="auth-visual__title">
+						<span className="section-kicker">
+							<ShieldOutlinedIcon fontSize="small" />
+							<span>Join ReadyCool</span>
+						</span>
+						<h1>Create your account</h1>
+						<p>
+							Set up a customer account to sell equipment, browse inventory, and request service or tender support.
+						</p>
+					</div>
 
-				<label htmlFor="signup-email" style={{ color: "#b0b8c9", fontWeight: 600 }}>Email</label>
-				<div style={{ position: "relative" }}>
-					<FiMail style={{ position: "absolute", left: 12, top: 12, color: "#2563eb" }} />
-					<input
-						id="signup-email"
-						type="email"
-						placeholder="you@example.com"
-						required
-						value={email}
-						onChange={e => setEmail(e.target.value)}
-						style={{ paddingLeft: 36, border: "1.5px solid #e0e7ef", borderRadius: 8, height: 38, background: "#f6f8fa", color: "#17304a", fontSize: 15, marginBottom: 8 }}
-					/>
-				</div>
+					<div className="auth-points">
+						<div className="auth-point">
+							<VerifiedUserOutlinedIcon />
+							<div>
+								<strong>Secure access</strong>
+								<span>Your login is used for listings, service, and commercial requests.</span>
+							</div>
+						</div>
+						<div className="auth-point">
+							<ShieldOutlinedIcon />
+							<div>
+								<strong>Privacy-first resale</strong>
+								<span>Buyers never see the original seller when equipment moves through the platform.</span>
+							</div>
+						</div>
+					</div>
+				</aside>
 
-				<label htmlFor="signup-password" style={{ color: "#b0b8c9", fontWeight: 600 }}>Password</label>
-				<div style={{ position: "relative" }}>
-					<FiLock style={{ position: "absolute", left: 12, top: 12, color: "#2563eb" }} />
-					<input
-						id="signup-password"
-						type={showPassword ? "text" : "password"}
-						placeholder="Create password"
-						required
-						value={password}
-						onChange={e => setPassword(e.target.value)}
-						style={{ paddingLeft: 36, border: "1.5px solid #e0e7ef", borderRadius: 8, height: 38, background: "#f6f8fa", color: "#17304a", fontSize: 15, marginBottom: 8 }}
-					/>
-					<button
-						type="button"
-						onClick={() => setShowPassword((v) => !v)}
-						style={{ position: "absolute", right: 8, top: 8, background: "none", border: "none", color: "#2563eb", cursor: "pointer", fontWeight: 600 }}
-						aria-label={showPassword ? "Hide password" : "Show password"}
-					>
-						{showPassword ? "Hide" : "Show"}
-					</button>
-				</div>
+				<section className="auth-card">
+					<div className="auth-card__top">
+						<h2>Sign up</h2>
+						<p>Create the account you will use for the marketplace and service desk.</p>
+					</div>
 
-				<button type="submit" className="auth-btn" style={{ marginTop: 18, background: "linear-gradient(90deg, #2563eb, #1d4ed8)", fontWeight: 700, fontSize: 18 }}>
-					Signup
-				</button>
-				<p style={{ textAlign: "center", marginTop: 18, color: "#555" }}>
-					Already have an account? <a href="/login" style={{ color: "#2563eb", textDecoration: "underline" }}>Login</a>
-				</p>
-			</form>
+					<form className="auth-form" onSubmit={handleSubmit}>
+						<div className="auth-field">
+							<label className="auth-label" htmlFor="signup-name">Full name</label>
+							<div className="auth-input-wrap">
+								<PersonOutlineOutlinedIcon className="auth-input-icon" fontSize="small" />
+								<input
+									className="auth-input"
+									id="signup-name"
+									type="text"
+									name="name"
+									placeholder="John Doe"
+									required
+									value={formData.name}
+									onChange={handleChange}
+								/>
+							</div>
+						</div>
+
+						<div className="auth-row">
+							<div className="auth-field">
+								<label className="auth-label" htmlFor="signup-phone">Phone</label>
+								<div className="auth-input-wrap">
+									<PersonOutlineOutlinedIcon className="auth-input-icon" fontSize="small" />
+									<input
+										className="auth-input"
+										id="signup-phone"
+										type="tel"
+										name="phone"
+										placeholder="+91 98765 43210"
+										required
+										value={formData.phone}
+										onChange={handleChange}
+									/>
+								</div>
+							</div>
+
+							<div className="auth-field">
+								<label className="auth-label" htmlFor="signup-city">City</label>
+								<div className="auth-input-wrap">
+									<PersonOutlineOutlinedIcon className="auth-input-icon" fontSize="small" />
+									<input
+										className="auth-input"
+										id="signup-city"
+										type="text"
+										name="city"
+										placeholder="Mumbai"
+										required
+										value={formData.city}
+										onChange={handleChange}
+									/>
+								</div>
+							</div>
+						</div>
+
+						<div className="auth-row">
+							<div className="auth-field">
+								<label className="auth-label" htmlFor="signup-company">Company (optional)</label>
+								<div className="auth-input-wrap">
+									<PersonOutlineOutlinedIcon className="auth-input-icon" fontSize="small" />
+									<input
+										className="auth-input"
+										id="signup-company"
+										type="text"
+										name="companyName"
+										placeholder="ABC Cold Chain Pvt Ltd"
+										value={formData.companyName}
+										onChange={handleChange}
+									/>
+								</div>
+							</div>
+
+							<div className="auth-field">
+								<label className="auth-label" htmlFor="signup-role">Role (optional)</label>
+								<div className="auth-input-wrap">
+									<PersonOutlineOutlinedIcon className="auth-input-icon" fontSize="small" />
+									<input
+										className="auth-input"
+										id="signup-role"
+										type="text"
+										name="jobRole"
+										placeholder="Facility Manager"
+										value={formData.jobRole}
+										onChange={handleChange}
+									/>
+								</div>
+							</div>
+						</div>
+
+						<div className="auth-field">
+							<label className="auth-label" htmlFor="signup-address">Address (optional)</label>
+							<div className="auth-input-wrap">
+								<PersonOutlineOutlinedIcon className="auth-input-icon" fontSize="small" />
+								<input
+									className="auth-input"
+									id="signup-address"
+									type="text"
+									name="addressLine"
+									placeholder="Site address / locality"
+									value={formData.addressLine}
+									onChange={handleChange}
+								/>
+							</div>
+						</div>
+
+						<div className="auth-field">
+							<label className="auth-label" htmlFor="signup-email">Email</label>
+							<div className="auth-input-wrap">
+								<AlternateEmailOutlinedIcon className="auth-input-icon" fontSize="small" />
+								<input
+									className="auth-input"
+									id="signup-email"
+									type="email"
+									name="email"
+									placeholder="you@example.com"
+									required
+									value={formData.email}
+									onChange={handleChange}
+								/>
+							</div>
+						</div>
+
+						<div className="auth-field">
+							<label className="auth-label" htmlFor="signup-password">Password</label>
+							<div className="auth-input-wrap">
+								<LockOutlinedIcon className="auth-input-icon" fontSize="small" />
+								<input
+									className="auth-input"
+									id="signup-password"
+									type={showPassword ? "text" : "password"}
+									name="password"
+									placeholder="Create password"
+									required
+									value={formData.password}
+									onChange={handleChange}
+								/>
+								<button
+									type="button"
+									className="auth-toggle"
+									onClick={() => setShowPassword((value) => !value)}
+									aria-label={showPassword ? "Hide password" : "Show password"}
+								>
+									{showPassword ? <VisibilityOffOutlinedIcon fontSize="small" /> : <VisibilityOutlinedIcon fontSize="small" />}
+									<span>{showPassword ? "Hide" : "Show"}</span>
+								</button>
+							</div>
+						</div>
+
+						<button type="submit" className="auth-submit">Create account</button>
+
+						{errorMessage && <p className="auth-message auth-message--error">{errorMessage}</p>}
+
+						<div className="auth-footer">
+							<span>Already have an account?</span>
+							<Link className="auth-link" to="/login">Log in</Link>
+						</div>
+					</form>
+				</section>
+			</main>
 		</div>
 	);
 }

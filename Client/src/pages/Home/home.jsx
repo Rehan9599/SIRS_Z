@@ -1,5 +1,5 @@
 import Header from '../../components/Header';
-import React, { useState } from "react";
+import React from "react";
 import Hero from './Hero';
 import Services from './Services';
 import WhyChoose from './Whychoose';
@@ -10,17 +10,13 @@ function Home(props) {
   
   return (
     <div className="home-layout">
-      <div className="header-fullwidth">
-        {console.log(props.isLogged)}
-        <Header showAuth={props.isLogged} />
-      </div>
-
-      <div className="home-content">
+      <Header showAuth={props.isLogged} onLogout={props.onLogout} />
+      <div className="home-main">
         <Hero />
         <Services />
         <WhyChoose />
-        <Footer />
       </div>
+      <Footer />
     </div>
   );
 }

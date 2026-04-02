@@ -1,19 +1,26 @@
-
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import React, { useState } from "react";
-import { FiMail, FiLock } from "react-icons/fi";
+import AlternateEmailOutlinedIcon from "@mui/icons-material/AlternateEmailOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
+import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
 import axios from "axios";
 import Header from "../components/Header";
+import API_BASE_URL from "../api";
+import "../styles/auth.css";
 
 export default function Login(props) {
 	const navigate = useNavigate();
 	const [showPassword, setShowPassword] = useState(false);
-	const [isUser, setIsUser]=useState(false);
+	const [errorMessage, setErrorMessage] = useState("");
 	const [formData, setFormData]= useState({
 		email:"",
 		password:""
 	});
 	const handleChange = (e) => {
+		setErrorMessage("");
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -23,91 +30,130 @@ export default function Login(props) {
 		e.preventDefault();
 		try {
 			const response = await axios.post(
-				"http://localhost:5000/login", {
+				`${API_BASE_URL}/login`, {
 					email: formData.email,
 					password: formData.password
 				}
 			);
-			console.log("Login success:", response.data);
-			if(response.data.message=="yooooo"){
+			if(response.data.message === "login_success"){
 				props.setIsLogged(true);
 				props.setIsLoggedId(response.data.userId);
+				if (props.setUserName) {
+					props.setUserName(response.data.name || "");
+				}
+				setErrorMessage("");
 			    navigate("/");
 			}else{
 				setFormData({
-		        email:" ",
-		        password:" "
+		        email:"",
+		        password:""
 	            });
-				setIsUser(true);
-				navigate("/login");
+				setErrorMessage(response.data?.message || "Invalid email or password.");
 			}
 		} catch (error) {
 			if (error.response) {
-				console.log("Server responded with error:", error.response.data, error.response.status);
+				setErrorMessage(error.response.data?.message || "Invalid email or password.");
 			} else if (error.request) {
-				console.log("No response received:", error.request);
+				setErrorMessage("The server did not respond.");
 			} else {
-				console.log("Error setting up request:", error.message);
+				setErrorMessage(error.message);
 			}
 		}
 	};
 
 	return (
-		<div style={{ minHeight: "100vh", display: "flex", flexDirection: "column"}}>
-			<Header showAuth={props.isLogged} page="login"/>
-			<form className="form auth-form" onSubmit={handleSubmit} style={{ marginTop: 48, boxShadow: "0 4px 32px rgba(37,99,235,0.10)", background: "#fff" }}>
-				<h2 className="form-title" style={{ color: "#2563eb" }}>Welcome back</h2>
-				<p style={{ textAlign: "center", color: "#5c6678", marginBottom: 16 }}>
-					Please enter your credentials to sign in.
-				</p>
-				<label htmlFor="login-email" style={{ color: "#b0b8c9", fontWeight: 600 }}>Email</label>
-				<div style={{ position: "relative" }}>
-					<FiMail style={{ position: "absolute", left: 12, top: 12, color: "#2563eb" }} />
-					<input
-						id="login-email"
-						type="email"
-						name="email"
-						placeholder="you@example.com"
-						required
-						onChange={handleChange}
-						style={{ paddingLeft: 36, border: "1.5px solid #e0e7ef", borderRadius: 8, height: 38, background: "#f6f8fa", color: "#17304a", fontSize: 15, marginBottom: 8 }}
-					/>
-				</div>
+		<div className="auth-page">
+			<Header showAuth={props.isLogged} onLogout={props.onLogout} page="login" />
+			<main className="auth-shell">
+				<aside className="auth-visual">
+					<div className="auth-visual__title">
+						<span className="section-kicker">
+							<VerifiedUserOutlinedIcon fontSize="small" />
+							<span>Secure login</span>
+						</span>
+						<h1>Welcome back to ReadyCool</h1>
+						<p>
+							Log in to manage listings, browse verified inventory, and handle service or tender requests from one central account.
+						</p>
+					</div>
 
-				<label htmlFor="login-password" style={{ color: "#b0b8c9", fontWeight: 600 }}>Password</label>
-				<div style={{ position: "relative" }}>
-					<FiLock style={{ position: "absolute", left: 12, top: 12, color: "#2563eb" }} />
-					<input
-						id="login-password"
-						name="password"
-						type={showPassword ? "text" : "password"}
-						placeholder="Enter password"
-						required
-						onChange={handleChange}
-						style={{ paddingLeft: 36, border: "1.5px solid #e0e7ef", borderRadius: 8, height: 38, background: "#f6f8fa", color: "#17304a", fontSize: 15, marginBottom: 8 }}
-					/>
-					<button
-						type="button"
-						onClick={() => setShowPassword((v) => !v)}
-						style={{ position: "absolute", right: 8, top: 8, background: "none", border: "none", color: "#2563eb", cursor: "pointer", fontWeight: 600 }}
-						aria-label={showPassword ? "Hide password" : "Show password"}
-					>
-						{showPassword ? "Hide" : "Show"}
-					</button>
-				</div>
+					<div className="auth-points">
+						<div className="auth-point">
+							<SupportAgentOutlinedIcon />
+							<div>
+								<strong>Built for business users</strong>
+								<span>Access the buy, sell, and commercial flows from one account.</span>
+							</div>
+						</div>
+						<div className="auth-point">
+							<VerifiedUserOutlinedIcon />
+							<div>
+								<strong>Private resale flow</strong>
+								<span>Seller identity stays hidden when items are listed for buyers.</span>
+							</div>
+						</div>
+					</div>
+				</aside>
 
-				<button type="submit" className="auth-btn" style={{ marginTop: 18, background: "linear-gradient(90deg, #2563eb, #1d4ed8)", fontWeight: 700, fontSize: 18 }}>
-					Login
-				</button>
-				{isUser && 
-				<p style={{ textAlign: "center", color: "red", marginBottom: 16 }}>
-					user not found
-				</p>
-				}
-				<p style={{ textAlign: "center", marginTop: 18, color: "#555" }}>
-					Don&apos;t have an account? <a href="/signup" style={{ color: "#2563eb", textDecoration: "underline" }}>Sign up</a>
-				</p>
-			</form>
+				<section className="auth-card">
+					<div className="auth-card__top">
+						<h2>Sign in</h2>
+						<p>Use your account to continue to the marketplace and commercial desk.</p>
+					</div>
+
+					<form className="auth-form" onSubmit={handleSubmit}>
+						<div className="auth-field">
+							<label className="auth-label" htmlFor="login-email">Email</label>
+							<div className="auth-input-wrap">
+								<AlternateEmailOutlinedIcon className="auth-input-icon" fontSize="small" />
+								<input
+									className="auth-input"
+									id="login-email"
+									type="email"
+									name="email"
+									placeholder="you@example.com"
+									required
+									onChange={handleChange}
+								/>
+							</div>
+						</div>
+
+						<div className="auth-field">
+							<label className="auth-label" htmlFor="login-password">Password</label>
+							<div className="auth-input-wrap">
+								<LockOutlinedIcon className="auth-input-icon" fontSize="small" />
+								<input
+									className="auth-input"
+									id="login-password"
+									name="password"
+									type={showPassword ? "text" : "password"}
+									placeholder="Enter password"
+									required
+									onChange={handleChange}
+								/>
+								<button
+									type="button"
+									className="auth-toggle"
+									onClick={() => setShowPassword((value) => !value)}
+									aria-label={showPassword ? "Hide password" : "Show password"}
+								>
+									{showPassword ? <VisibilityOffOutlinedIcon fontSize="small" /> : <VisibilityOutlinedIcon fontSize="small" />}
+									<span>{showPassword ? "Hide" : "Show"}</span>
+								</button>
+							</div>
+						</div>
+
+						<button type="submit" className="auth-submit">Login</button>
+
+						{errorMessage && <p className="auth-message auth-message--error">{errorMessage}</p>}
+
+						<div className="auth-footer">
+							<span>Need an account?</span>
+							<Link className="auth-link" to="/signup">Sign up now</Link>
+						</div>
+					</form>
+				</section>
+			</main>
 		</div>
 	);
 }

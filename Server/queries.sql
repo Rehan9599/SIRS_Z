@@ -1,0 +1,78 @@
+CREATE DATABASE IF NOT EXISTS readycool;
+USE readycool;
+
+CREATE TABLE IF NOT EXISTS users (
+  userID INT AUTO_INCREMENT PRIMARY KEY,
+  userName VARCHAR(120) NOT NULL,
+  email VARCHAR(160) NOT NULL UNIQUE,
+  passwords VARCHAR(20) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sell (
+  sellID INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  item_name VARCHAR(180) NOT NULL,
+  description TEXT NOT NULL,
+  price DECIMAL(12,2) NOT NULL,
+  quantity INT NOT NULL DEFAULT 1,
+  status VARCHAR(60) NOT NULL,
+  imageUrl VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_sell_user_id (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS user_profiles (
+  profile_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  phone VARCHAR(20) NULL,
+  company_name VARCHAR(120) NULL,
+  job_role VARCHAR(80) NULL,
+  city VARCHAR(80) NULL,
+  address_line VARCHAR(200) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_user_profiles_user (user_id),
+  CONSTRAINT fk_user_profiles_user FOREIGN KEY (user_id) REFERENCES users(userID) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS listing_details (
+  detail_id INT AUTO_INCREMENT PRIMARY KEY,
+  sell_id INT NOT NULL,
+  category VARCHAR(80) NULL,
+  brand VARCHAR(80) NULL,
+  model VARCHAR(120) NULL,
+  manufacture_year INT NULL,
+  city VARCHAR(80) NULL,
+  warranty_months INT NULL,
+  negotiable TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_listing_details_sell (sell_id),
+  CONSTRAINT fk_listing_details_sell FOREIGN KEY (sell_id) REFERENCES sell(sellID) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS service_requests (
+  requestID INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  request_type VARCHAR(120) NOT NULL,
+  status VARCHAR(50) DEFAULT 'Open',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_service_requests_user_id (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS purchases (
+  purchaseID INT AUTO_INCREMENT PRIMARY KEY,
+  buyer_id INT NOT NULL,
+  sell_id INT NULL,
+  item_name VARCHAR(180) NOT NULL,
+  price DECIMAL(12,2) NOT NULL,
+  status VARCHAR(50) DEFAULT 'Recorded',
+  purchased_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_purchases_buyer_id (buyer_id)
+);
+
+
+select * from users;

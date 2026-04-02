@@ -28,13 +28,27 @@ console.log(path.join(__dirname, 'uploads'));
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
+  host: process.env.DB_HOST || '127.0.0.1',
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASS || '',
+  database: process.env.DB_NAME || 'Readycool',
+  connectTimeout: 10000,
   ssl: { rejectUnauthorized: false }
 });
+
+async function testDbConnection() {
+  try {
+    const conn = await pool.getConnection();
+    await conn.ping();
+    conn.release();
+    console.log('[DB] Connection successful to', process.env.DB_HOST || '127.0.0.1');
+  } catch (err) {
+    console.error('[DB] Connection failed:', err.code || err.message, '-', err.sqlMessage || '');
+    console.error('[DB] Check DB_HOST/DB_PORT/DB_USER/DB_PASS/DB_NAME and network/whitelist.');
+    process.exit(1);
+  }
+}
 
 module.exports = pool;
 
@@ -93,10 +107,11 @@ async function authUsers(email,password) {
     return null;
   }
 }
-getUsers();
 
-
-
+(async () => {
+  await testDbConnection();
+  await getUsers();
+})();
 
 app.get("/", (req, res) => {
   res.json({ message: "Server is running" });

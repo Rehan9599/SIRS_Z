@@ -278,6 +278,10 @@ body[data-mode="chill"] .brand__mark {
   cursor: pointer;
 }
 
+.mobile-nav-toggle {
+  display: none;
+}
+
 .profile-menu__panel {
   position: absolute;
   top: calc(100% + 0.55rem);

@@ -61,7 +61,8 @@ function Sell(props) {
 			payload.append("price", formData.price);
 			payload.append("warrantyMonths", formData.warrantyMonths);
 			payload.append("negotiable", String(formData.negotiable));
-			payload.append("status", formData.condition);
+			// Keep `condition` separate from verification status (server derives verification flow).
+			payload.append("condition", formData.condition);
 			payload.append("description", formData.description);
 			payload.append("quantity", "1");
 			if (formData.image) {
@@ -69,8 +70,11 @@ function Sell(props) {
 			}
 
 			const response = await axios.post(`${API_BASE_URL}/sell`, payload);
+			const verificationStatus = response.data?.verificationStatus;
 			setFeedback({
-				text: response.data?.message || "Listing submitted successfully.",
+				text: verificationStatus
+					? `Listing posted successfully. Verification: ${verificationStatus}.`
+					: response.data?.message || "Listing submitted successfully.",
 				type: "success"
 			});
 			setFormData({

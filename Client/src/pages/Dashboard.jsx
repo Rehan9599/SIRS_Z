@@ -44,6 +44,8 @@ function Dashboard(props) {
 
   const listings = dashboard?.listings || [];
   const requests = dashboard?.requests || [];
+  const inquiriesSent = dashboard?.inquiriesSent || [];
+  const inquiriesReceived = dashboard?.inquiriesReceived || [];
   const purchases = dashboard?.purchases || [];
 
   return (
@@ -112,7 +114,7 @@ function Dashboard(props) {
                     <thead>
                       <tr>
                         <th>Item</th>
-                        <th>Status</th>
+                        <th>Verification</th>
                         <th>Price</th>
                       </tr>
                     </thead>
@@ -120,7 +122,10 @@ function Dashboard(props) {
                       {listings.map((listing) => (
                         <tr key={listing.sellID}>
                           <td>{listing.item_name}</td>
-                          <td>{listing.status || "Listed"}</td>
+                          <td>
+                            {listing.verificationStatus || "Pending Review"}
+                            {listing.listingCondition || listing.condition ? ` · ${listing.listingCondition || listing.condition}` : ""}
+                          </td>
                           <td>Rs {listing.price}</td>
                         </tr>
                       ))}
@@ -145,10 +150,38 @@ function Dashboard(props) {
                     ))}
                   </ul>
                 )}
+
+                <h3 style={{ marginTop: "1.2rem" }}>Your inquiries (sent)</h3>
+                {inquiriesSent.length === 0 ? (
+                  <p className="dashboard-empty">No inquiries sent yet.</p>
+                ) : (
+                  <ul className="dashboard-list">
+                    {inquiriesSent.map((inquiry, index) => (
+                      <li key={inquiry.id || index}>
+                        <strong>{inquiry.item_name || "Listing inquiry"}</strong>
+                        <span>{inquiry.status || "Sent"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </article>
 
               <article className="dashboard-panel">
-                <h3>Items bought from ReadyCool</h3>
+                <h3>Inquiries (received on your listings)</h3>
+                {inquiriesReceived.length === 0 ? (
+                  <p className="dashboard-empty">No inquiries received yet.</p>
+                ) : (
+                  <ul className="dashboard-list">
+                    {inquiriesReceived.map((inquiry, index) => (
+                      <li key={inquiry.id || index}>
+                        <strong>{inquiry.item_name || "Listing inquiry"}</strong>
+                        <span>{inquiry.status || "Sent"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <h3 style={{ marginTop: "1.2rem" }}>Items bought from ReadyCool</h3>
                 {purchases.length === 0 ? (
                   <p className="dashboard-empty">No purchases recorded yet.</p>
                 ) : (

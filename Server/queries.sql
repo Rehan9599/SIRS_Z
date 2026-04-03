@@ -5,10 +5,13 @@ CREATE TABLE IF NOT EXISTS users (
   userID INT AUTO_INCREMENT PRIMARY KEY,
   userName VARCHAR(120) NOT NULL,
   email VARCHAR(160) NOT NULL UNIQUE,
-  passwords VARCHAR(20) NOT NULL,
+  passwords VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Ensure bcrypt hashes fit even if the DB was created earlier.
+ALTER TABLE users MODIFY passwords VARCHAR(255) NOT NULL;
 
 CREATE TABLE IF NOT EXISTS sell (
   sellID INT AUTO_INCREMENT PRIMARY KEY,
@@ -54,6 +57,19 @@ CREATE TABLE IF NOT EXISTS listing_details (
   CONSTRAINT fk_listing_details_sell FOREIGN KEY (sell_id) REFERENCES sell(sellID) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS listing_verifications (
+  sell_id INT NOT NULL,
+  verification_status VARCHAR(60) NOT NULL DEFAULT 'Pending Review',
+  photo_complete TINYINT(1) NOT NULL DEFAULT 0,
+  spec_complete TINYINT(1) NOT NULL DEFAULT 0,
+  model_category_match TINYINT(1) NOT NULL DEFAULT 0,
+  manual_checklist TEXT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (sell_id),
+  CONSTRAINT fk_listing_verifications_sell FOREIGN KEY (sell_id) REFERENCES sell(sellID) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS service_requests (
   requestID INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -61,6 +77,22 @@ CREATE TABLE IF NOT EXISTS service_requests (
   status VARCHAR(50) DEFAULT 'Open',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_service_requests_user_id (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS service_request_details (
+  request_id INT NOT NULL,
+  title VARCHAR(180) NOT NULL,
+  equipment_category VARCHAR(80) NULL,
+  brand VARCHAR(80) NULL,
+  model VARCHAR(120) NULL,
+  city VARCHAR(80) NULL,
+  urgency VARCHAR(30) NULL,
+  notes TEXT NULL,
+  imageUrl VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (request_id),
+  CONSTRAINT fk_service_request_details_request FOREIGN KEY (request_id) REFERENCES service_requests(requestID) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS purchases (
@@ -74,5 +106,19 @@ CREATE TABLE IF NOT EXISTS purchases (
   INDEX idx_purchases_buyer_id (buyer_id)
 );
 
+CREATE TABLE IF NOT EXISTS inquiries (
+  inquiryID INT AUTO_INCREMENT PRIMARY KEY,
+  buyer_id INT NOT NULL,
+  seller_id INT NOT NULL,
+  sell_id INT NOT NULL,
+  message TEXT NOT NULL,
+  status VARCHAR(50) DEFAULT 'Sent',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_inquiries_buyer_id (buyer_id),
+  INDEX idx_inquiries_seller_id (seller_id),
+  CONSTRAINT fk_inquiries_buyer FOREIGN KEY (buyer_id) REFERENCES users(userID) ON DELETE CASCADE,
+  CONSTRAINT fk_inquiries_seller FOREIGN KEY (seller_id) REFERENCES users(userID) ON DELETE CASCADE,
+  CONSTRAINT fk_inquiries_sell FOREIGN KEY (sell_id) REFERENCES sell(sellID) ON DELETE CASCADE
+);
 
-select * from users;
+-- Intentionally no debug SELECT statements.

@@ -15,7 +15,22 @@ const UPLOADS_DIR = path.join(__dirname, "uploads");
 const QUERIES_SQL_PATH = path.join(__dirname, "queries.sql");
 const PASSWORD_MAX_CHARS = 20;
 
-app.use(cors());
+// CORS is required because frontend (Vercel) and API (Render) will run on different origins.
+// Set `CORS_ORIGIN` to a comma-separated list of allowed origins (e.g. https://your-ui.vercel.app,http://localhost:5173).
+// If not provided, we fall back to allowing any origin.
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+	.split(",")
+	.map((s) => s.trim())
+	.filter(Boolean);
+
+const corsOptions = {
+	origin: allowedOrigins.length ? allowedOrigins : true,
+	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+	allowedHeaders: ["Content-Type", "Authorization"],
+	credentials: false
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(UPLOADS_DIR));
@@ -115,6 +130,9 @@ async function createUser({ name, email, password, phone, companyName, jobRole, 
     throw new Error(`Password must be ${PASSWORD_MAX_CHARS} characters or fewer for the current database setup.`);
   }
 
+  // Store a bcrypt hash (not plaintext).
+  const passwordHash = await bcrypt.hash(password, 10);
+
   const connection = await pool.getConnection();
 
   try {
@@ -122,7 +140,7 @@ async function createUser({ name, email, password, phone, companyName, jobRole, 
 
     const [result] = await connection.execute(
       "INSERT INTO users(userName, email, passwords) VALUES (?, ?, ?)",
-      [name, email, password]
+      [name, email, passwordHash]
     );
 
     await connection.execute(
@@ -187,16 +205,29 @@ async function getItems(userId, filters = {}) {
   const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const query = `
     SELECT
-      s.*,
+      s.sellID,
+      s.item_name,
+      s.description,
+      s.price,
+      s.quantity,
+      s.status AS listingCondition,
+      s.imageUrl,
+      s.created_at,
       ld.category,
       ld.brand,
       ld.model,
       ld.manufacture_year,
       ld.city,
       ld.warranty_months,
-      ld.negotiable
+      ld.negotiable,
+      COALESCE(lv.verification_status, 'Pending Review') AS verificationStatus,
+      COALESCE(lv.photo_complete, 0) AS photoComplete,
+      COALESCE(lv.spec_complete, 0) AS specComplete,
+      COALESCE(lv.model_category_match, 0) AS modelCategoryMatch,
+      lv.manual_checklist AS manualCheckList
     FROM sell s
     LEFT JOIN listing_details ld ON ld.sell_id = s.sellID
+    LEFT JOIN listing_verifications lv ON lv.sell_id = s.sellID
     ${whereSql}
     ORDER BY s.sellID DESC`;
 
@@ -207,7 +238,21 @@ async function getItems(userId, filters = {}) {
 async function getMyListings(userId) {
   try {
     const [rows] = await pool.execute(
-      "SELECT sellID, item_name, price, status, description, imageUrl FROM sell WHERE user_id = ? ORDER BY sellID DESC",
+      `SELECT
+        s.sellID,
+        s.item_name,
+        s.price,
+        s.status AS listingCondition,
+        s.description,
+        s.imageUrl,
+        COALESCE(lv.verification_status, 'Pending Review') AS verificationStatus,
+        COALESCE(lv.photo_complete, 0) AS photoComplete,
+        COALESCE(lv.spec_complete, 0) AS specComplete,
+        COALESCE(lv.model_category_match, 0) AS modelCategoryMatch
+      FROM sell s
+      LEFT JOIN listing_verifications lv ON lv.sell_id = s.sellID
+      WHERE s.user_id = ?
+      ORDER BY s.sellID DESC`,
       [userId]
     );
     return rows;
@@ -238,9 +283,10 @@ async function updateUserProfile(userId, userName, email, password) {
   }
 
   if (password) {
+    const passwordHash = await bcrypt.hash(password, 10);
     await pool.execute(
       "UPDATE users SET userName = ?, email = ?, passwords = ? WHERE userID = ?",
-      [userName, email, password, userId]
+      [userName, email, passwordHash, userId]
     );
     return;
   }
@@ -298,12 +344,66 @@ async function addListingDetails(sellId, details = {}) {
   );
 }
 
+async function upsertListingVerification(sellId, {
+  verificationStatus = "Pending Review",
+  photoComplete = 0,
+  specComplete = 0,
+  modelCategoryMatch = 0,
+  manualChecklist = null
+} = {}) {
+  await pool.execute(
+    `INSERT INTO listing_verifications
+      (sell_id, verification_status, photo_complete, spec_complete, model_category_match, manual_checklist)
+     VALUES
+      (?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+      verification_status = VALUES(verification_status),
+      photo_complete = VALUES(photo_complete),
+      spec_complete = VALUES(spec_complete),
+      model_category_match = VALUES(model_category_match),
+      manual_checklist = VALUES(manual_checklist)`,
+    [
+      sellId,
+      verificationStatus,
+      photoComplete ? 1 : 0,
+      specComplete ? 1 : 0,
+      modelCategoryMatch ? 1 : 0,
+      manualChecklist
+    ]
+  );
+}
+
+async function getListingById(sellId) {
+  const [rows] = await pool.execute(
+    `SELECT sellID, user_id, item_name, price, imageUrl, status AS listingCondition
+     FROM sell
+     WHERE sellID = ?
+     LIMIT 1`,
+    [sellId]
+  );
+  return rows[0] || null;
+}
+
 async function getDashboardPayload(userId) {
   const user = await getUserById(userId);
   const listings = await getMyListings(userId);
 
   const requests = await tryOptionalQuery(
-    "SELECT requestID AS id, request_type, status, created_at FROM service_requests WHERE user_id = ? ORDER BY requestID DESC LIMIT 20",
+    `SELECT
+      r.requestID AS id,
+      r.request_type,
+      r.status,
+      d.title,
+      d.equipment_category,
+      d.city,
+      d.urgency,
+      d.notes,
+      r.created_at
+    FROM service_requests r
+    LEFT JOIN service_request_details d ON d.request_id = r.requestID
+    WHERE r.user_id = ?
+    ORDER BY r.requestID DESC
+    LIMIT 20`,
     [userId]
   );
 
@@ -312,14 +412,56 @@ async function getDashboardPayload(userId) {
     [userId]
   );
 
+  const inquiriesSent = await tryOptionalQuery(
+    `SELECT
+      i.inquiryID AS id,
+      i.status,
+      i.message,
+      i.created_at,
+      s.item_name,
+      s.price,
+      s.imageUrl,
+      COALESCE(lv.verification_status, 'Pending Review') AS verificationStatus
+    FROM inquiries i
+    JOIN sell s ON s.sellID = i.sell_id
+    LEFT JOIN listing_verifications lv ON lv.sell_id = s.sellID
+    WHERE i.buyer_id = ?
+    ORDER BY i.inquiryID DESC
+    LIMIT 20`,
+    [userId]
+  );
+
+  const inquiriesReceived = await tryOptionalQuery(
+    `SELECT
+      i.inquiryID AS id,
+      i.status,
+      i.message,
+      i.created_at,
+      s.item_name,
+      s.price,
+      s.imageUrl,
+      COALESCE(lv.verification_status, 'Pending Review') AS verificationStatus
+    FROM inquiries i
+    JOIN sell s ON s.sellID = i.sell_id
+    LEFT JOIN listing_verifications lv ON lv.sell_id = s.sellID
+    WHERE i.seller_id = ?
+    ORDER BY i.inquiryID DESC
+    LIMIT 20`,
+    [userId]
+  );
+
   return {
     user,
     listings,
     requests,
+    inquiriesSent,
+    inquiriesReceived,
     purchases,
     summary: {
       listingCount: listings.length,
       requestCount: requests.length,
+      inquirySentCount: inquiriesSent.length,
+      inquiryReceivedCount: inquiriesReceived.length,
       purchaseCount: purchases.length
     }
   };
@@ -409,6 +551,7 @@ app.post("/sell", upload.single("image"), async (req, res) => {
       price,
       quantity,
       status,
+      condition,
       category,
       brand,
       model,
@@ -418,12 +561,20 @@ app.post("/sell", upload.single("image"), async (req, res) => {
       negotiable
     } = req.body;
 
-    if (!id || !item || !description || !price || !quantity || !status) {
+    const listingCondition = condition || status;
+
+    if (!id || !item || !description || !price || !quantity || !listingCondition) {
       return res.status(400).json({ message: "All listing fields are required." });
     }
 
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-    const result = await addItem(id, item, description, price, quantity, status, imageUrl);
+    const photoComplete = req.file ? 1 : 0;
+    const specComplete = category && brand && model && city ? 1 : 0;
+    const modelCategoryMatch = category && model ? 1 : 0;
+    const verificationStatus =
+      photoComplete && specComplete && modelCategoryMatch ? "Verified" : "Pending Review";
+
+    const result = await addItem(id, item, description, price, quantity, listingCondition, imageUrl);
     await addListingDetails(result.insertId, {
       category,
       brand,
@@ -434,13 +585,172 @@ app.post("/sell", upload.single("image"), async (req, res) => {
       negotiable: String(negotiable) === "true"
     });
 
+    await upsertListingVerification(result.insertId, {
+      verificationStatus,
+      photoComplete,
+      specComplete,
+      modelCategoryMatch,
+      manualChecklist: null
+    });
+
     return res.status(201).json({
       message: "Listing posted successfully.",
       insertedId: result.insertId,
-      imageUrl
+      imageUrl,
+      verificationStatus
     });
   } catch (err) {
     return res.status(500).json({ message: "Unable to post listing right now.", error: err.message });
+  }
+});
+
+app.put("/listings/:id/verification", async (req, res) => {
+  try {
+    const sellId = Number(req.params.id);
+    if (!Number.isFinite(sellId)) {
+      return res.status(400).json({ message: "Invalid listing id." });
+    }
+
+    const { status, manualChecklist } = req.body;
+    const allowed = new Set(["Pending Review", "Verified", "Rejected"]);
+    if (!status || !allowed.has(status)) {
+      return res.status(400).json({ message: "status must be one of Pending Review, Verified, Rejected." });
+    }
+
+    const [existingRows] = await pool.execute(
+      `SELECT photo_complete, spec_complete, model_category_match
+       FROM listing_verifications
+       WHERE sell_id = ?
+       LIMIT 1`,
+      [sellId]
+    );
+
+    const existing = existingRows[0] || {};
+
+    if (status === "Verified") {
+      // Enforce that Verified can only be set when the required checks are complete.
+      const photoOk = Number(existing.photo_complete ?? 0) === 1;
+      const specOk = Number(existing.spec_complete ?? 0) === 1;
+      const modelOk = Number(existing.model_category_match ?? 0) === 1;
+      if (!photoOk || !specOk || !modelOk) {
+        return res.status(400).json({
+          message: "Cannot set verification to Verified unless photo/spec/model-category checks are complete."
+        });
+      }
+    }
+
+    await upsertListingVerification(sellId, {
+      verificationStatus: status,
+      photoComplete: existing.photo_complete ?? 0,
+      specComplete: existing.spec_complete ?? 0,
+      modelCategoryMatch: existing.model_category_match ?? 0,
+      manualChecklist: manualChecklist || null
+    });
+
+    return res.json({ message: "verification_updated", sellId, status });
+  } catch (err) {
+    return res.status(500).json({ message: "Unable to update verification.", error: err.message });
+  }
+});
+
+app.post("/inquiries", async (req, res) => {
+  try {
+    const { buyerId, sellId, message } = req.body;
+    const bId = Number(buyerId);
+    const sId = Number(sellId);
+
+    if (!Number.isFinite(bId) || !Number.isFinite(sId)) {
+      return res.status(400).json({ message: "buyerId and sellId are required." });
+    }
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({ message: "message is required." });
+    }
+
+    const listing = await getListingById(sId);
+    if (!listing) {
+      return res.status(404).json({ message: "Listing not found." });
+    }
+    if (listing.user_id === bId) {
+      return res.status(400).json({ message: "You cannot inquire about your own listing." });
+    }
+
+    await pool.execute(
+      `INSERT INTO inquiries
+        (buyer_id, seller_id, sell_id, message, status)
+       VALUES
+        (?, ?, ?, ?, ?)`,
+      [bId, listing.user_id, sId, message.trim(), "Sent"]
+    );
+
+    return res.status(201).json({ message: "inquiry_sent" });
+  } catch (err) {
+    return res.status(500).json({ message: "Unable to send inquiry right now.", error: err.message });
+  }
+});
+
+app.post("/service-requests", upload.single("image"), async (req, res) => {
+  try {
+    const {
+      userId,
+      requestType,
+      title,
+      equipmentCategory,
+      brand,
+      model,
+      city,
+      urgency,
+      notes
+    } = req.body;
+
+    const uId = Number(userId);
+    if (!Number.isFinite(uId)) {
+      return res.status(400).json({ message: "Valid userId is required." });
+    }
+    if (!requestType || !title) {
+      return res.status(400).json({ message: "requestType and title are required." });
+    }
+
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const [result] = await connection.execute(
+        `INSERT INTO service_requests (user_id, request_type, status)
+         VALUES (?, ?, 'Open')`,
+        [uId, requestType]
+      );
+
+      const requestId = result.insertId;
+      await connection.execute(
+        `INSERT INTO service_request_details
+          (request_id, title, equipment_category, brand, model, city, urgency, notes, imageUrl)
+         VALUES
+          (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          requestId,
+          title,
+          equipmentCategory || null,
+          brand || null,
+          model || null,
+          city || null,
+          urgency || null,
+          notes || null,
+          imageUrl
+        ]
+      );
+
+      await connection.commit();
+      return res.status(201).json({ message: "service_request_created", requestId });
+    } catch (txErr) {
+      await connection.rollback();
+      throw txErr;
+    } finally {
+      connection.release();
+    }
+  } catch (err) {
+    return res.status(500).json({ message: "Unable to create service request right now.", error: err.message });
   }
 });
 

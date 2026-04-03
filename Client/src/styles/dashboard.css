@@ -265,3 +265,18 @@ body[data-mode="chill"] .dashboard-list li {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 760px) {
+  .dashboard-main {
+    width: 100%;
+    padding-inline: var(--page-gutter);
+  }
+
+  .dashboard-hero__stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dashboard-table {
+    font-size: 0.85rem;
+  }
+}

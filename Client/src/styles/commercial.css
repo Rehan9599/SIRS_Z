@@ -168,4 +168,15 @@ body[data-mode="chill"] .commercial-card {
   .commercial-grid {
     grid-template-columns: 1fr;
   }
+
+  .commercial-flow {
+    width: 100%;
+    padding-inline: var(--page-gutter);
+  }
+
+  .commercial-copy,
+  .commercial-panel,
+  .commercial-card {
+    border-radius: 22px;
+  }
 }

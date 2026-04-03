@@ -664,3 +664,28 @@ body[data-mode="chill"] .buy-card__btn:hover {
     gap: 0.8rem;
   }
 }
+
+@media (max-width: 760px) {
+  .market-main,
+  .market-section {
+    width: 100%;
+    padding-inline: var(--page-gutter);
+  }
+
+  .buy-hero {
+    padding: 1.2rem;
+    border-radius: 18px;
+  }
+
+  .buy-card {
+    border-radius: 10px;
+  }
+
+  .buy-card__title {
+    font-size: 0.9rem;
+  }
+
+  .buy-card__price {
+    font-size: 1rem;
+  }
+}

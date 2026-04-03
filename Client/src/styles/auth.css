@@ -266,3 +266,14 @@ body[data-mode="chill"] .auth-submit {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 760px) {
+  .auth-shell {
+    width: 100%;
+    padding-inline: var(--page-gutter);
+  }
+
+  .auth-card {
+    padding: 1.6rem 1.4rem;
+  }
+}

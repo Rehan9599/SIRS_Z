@@ -455,22 +455,116 @@ body[data-mode="chill"] .site-footer {
   .site-header__inner {
     width: 100%;
     padding-inline: var(--page-gutter);
-    gap: 0.5rem;
     min-height: 0;
   }
 
   .site-nav {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 0.35rem;
+    display: none;
   }
 
-  .nav-link,
-  .nav-button {
-    min-height: 34px;
-    padding: 0.35rem 0.7rem;
-    font-size: 0.82rem;
+  .mobile-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin-left: auto;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .mobile-nav-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: flex-end;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 120;
+  }
+
+  .mobile-nav {
+    width: min(280px, 80%);
+    height: 100%;
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.25);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  body[data-mode="chill"] .mobile-nav {
+    background: rgba(8, 18, 34, 0.96);
+  }
+
+  .mobile-nav__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .mobile-nav__brand {
+    font-weight: 800;
+    letter-spacing: -0.04em;
+  }
+
+  .mobile-nav__close {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .mobile-nav__section {
+    display: grid;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+
+  .mobile-nav__section--footer {
+    margin-top: auto;
+  }
+
+  .mobile-nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.9rem;
+    text-align: left;
+  }
+
+  .mobile-nav-item svg {
+    font-size: 1.1rem;
+  }
+
+  .mobile-nav-item:hover {
+    background: rgba(121, 167, 255, 0.08);
+    border-color: rgba(121, 167, 255, 0.16);
+  }
+
+  .mobile-nav-item--danger {
+    color: #d32f2f;
+  }
+
+  body[data-mode="chill"] .mobile-nav-item--danger {
+    color: #ff6b6b;
   }
 
   .site-footer__inner {

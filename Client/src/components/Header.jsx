@@ -13,6 +13,8 @@ import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import WbSunnyOutlinedIcon from "@mui/icons-material/WbSunnyOutlined";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 
 const THEME_STORAGE_KEY = "readycool-mode";
 
@@ -20,6 +22,7 @@ function Header(props) {
   const navigate = useNavigate();
   const menuRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mode, setMode] = useState(() => {
     if (typeof window === "undefined") {
       return "default";
@@ -74,6 +77,15 @@ function Header(props) {
             <span>service, resale, tenders</span>
           </span>
         </Link>
+
+        <button
+          type="button"
+          className="mobile-nav-toggle"
+          aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
+          onClick={() => setMobileMenuOpen((open) => !open)}
+        >
+          {mobileMenuOpen ? <CloseRoundedIcon fontSize="small" /> : <MenuRoundedIcon fontSize="small" />}
+        </button>
 
         <nav className="site-nav">
           <Link to="/" className="nav-link">
@@ -148,6 +160,89 @@ function Header(props) {
           )}
         </nav>
       </div>
+
+      {mobileMenuOpen && (
+        <div className="mobile-nav-overlay" role="dialog" aria-modal="true" onClick={() => setMobileMenuOpen(false)}>
+          <div className="mobile-nav" onClick={(event) => event.stopPropagation()}>
+            <div className="mobile-nav__head">
+              <span className="mobile-nav__brand">ReadyCool</span>
+              <button
+                type="button"
+                className="mobile-nav__close"
+                aria-label="Close navigation"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <CloseRoundedIcon fontSize="small" />
+              </button>
+            </div>
+
+            <div className="mobile-nav__section">
+              <button type="button" className="mobile-nav-item" onClick={toggleMode}>
+                {mode === "default" ? <DarkModeOutlinedIcon fontSize="small" /> : <WbSunnyOutlinedIcon fontSize="small" />}
+                <span>{mode === "default" ? "Enable Chill Mode" : "Switch to Light Mode"}</span>
+              </button>
+            </div>
+
+            <div className="mobile-nav__section">
+              <Link to="/" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                <HomeOutlinedIcon fontSize="small" />
+                <span>Home</span>
+              </Link>
+              <Link to="/commercial" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                <StorefrontOutlinedIcon fontSize="small" />
+                <span>Commercial</span>
+              </Link>
+              {props.showAuth && (
+                <>
+                  <Link to="/buy" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                    <Inventory2OutlinedIcon fontSize="small" />
+                    <span>Buy</span>
+                  </Link>
+                  <Link to="/sell" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                    <SellOutlinedIcon fontSize="small" />
+                    <span>Sell</span>
+                  </Link>
+                  <Link to="/dashboard" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                    <DashboardCustomizeOutlinedIcon fontSize="small" />
+                    <span>Dashboard</span>
+                  </Link>
+                  <Link to="/profile" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                    <PersonOutlineOutlinedIcon fontSize="small" />
+                    <span>Profile</span>
+                  </Link>
+                </>
+              )}
+            </div>
+
+            <div className="mobile-nav__section mobile-nav__section--footer">
+              {props.showAuth ? (
+                <button
+                  type="button"
+                  className="mobile-nav-item mobile-nav-item--danger"
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <LogoutOutlinedIcon fontSize="small" />
+                  <span>Logout</span>
+                </button>
+              ) : (
+                <>
+                  <Link to="/signup" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                    <PersonAddAltOutlinedIcon fontSize="small" />
+                    <span>Sign Up</span>
+                  </Link>
+                  <Link to="/login" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                    <LoginOutlinedIcon fontSize="small" />
+                    <span>Login</span>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

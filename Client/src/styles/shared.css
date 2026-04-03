@@ -458,8 +458,25 @@ body[data-mode="chill"] .site-footer {
 @media (max-width: 640px) {
   .site-header__inner {
     width: 100%;
-    padding-inline: var(--page-gutter);
-    min-height: 0;
+    padding: 0.5rem var(--page-gutter);
+    min-height: 58px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    gap: 0.6rem;
+  }
+
+  .brand__mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+
+  .brand__text span {
+    display: none;
   }
 
   .site-nav {
@@ -494,6 +511,7 @@ body[data-mode="chill"] .site-footer {
   .mobile-nav {
     width: min(320px, 84%);
     height: 100%;
+    background: var(--panel);
     background: color-mix(in srgb, var(--panel) 92%, white 8%);
     border-left: 1px solid var(--line);
     box-shadow: -16px 0 40px rgba(0, 0, 0, 0.24);
@@ -501,6 +519,7 @@ body[data-mode="chill"] .site-footer {
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
+    overflow-y: auto;
     animation: slideInNav 160ms ease-out;
   }
 

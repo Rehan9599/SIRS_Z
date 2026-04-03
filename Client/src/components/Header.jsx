@@ -66,8 +66,9 @@ function Header(props) {
   };
 
   return (
-    <header className="site-header">
-      <div className="site-header__inner">
+    <>
+      <header className="site-header">
+        <div className="site-header__inner">
         <Link to="/" className="brand">
           <span className="brand__mark">
             <AcUnitOutlinedIcon fontSize="small" />
@@ -159,7 +160,8 @@ function Header(props) {
             </>
           )}
         </nav>
-      </div>
+        </div>
+      </header>
 
       {mobileMenuOpen && (
         <div className="mobile-nav-overlay" role="dialog" aria-modal="true" onClick={() => setMobileMenuOpen(false)}>
@@ -243,7 +245,7 @@ function Header(props) {
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }
 

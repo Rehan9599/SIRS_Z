@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOGIN PAGE</title>
+<link rel="stylesheet" href="styling.css">
+</head>
+
+<body>
+
+<div class="container">
+  <!-- DASHBOARD -->
+  <div class="card hidden" id="dashBox">
+    <div class="welcome" id="welcomeText"></div>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="card" id="loginBox">
+    <h2>Login</h2>
+    <input id="loginUser" placeholder="Username or Email">
+    <div class="pass-row">
+    
+    <input id="loginPass" type="password" placeholder="Password" onkeypress="enterLogin(event)">
+    <label class="show-pass">
+    <input type="checkbox" onclick="togglePass('loginPass')"> Show Password
+    </label>
+   
+</div>
+    <button onclick="login()">Log in</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div class="card hidden" id="signupBox">
+    <h2>Sign Up</h2>
+    <input id="suName" placeholder="Full Name">
+    <input id="suUser" placeholder="Username">
+    <input id="suEmail" placeholder="Email">
+    <input id="suPass" type="password" placeholder="Password">
+    <input id="suPass2" type="password" placeholder="Confirm Password">
+    <div class="row">
+      <label><input type="checkbox" onclick="togglePass('suPass');togglePass('suPass2')"> Show Password</label>
+    </div>
+    <button onclick="signup()">Sign Up</button>
+    <div class="msg" id="signupMsg"></div>
+  </div>
+
+  <!-- TOGGLE -->
+  <div class="bottom">
+    <span id="toggleText">Don't have an account?</span>
+    <span class="link" onclick="toggle()" id="toggleLink">Sign up</span>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

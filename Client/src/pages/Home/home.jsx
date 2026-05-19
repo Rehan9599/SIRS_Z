@@ -4,7 +4,7 @@ import Hero from './Hero';
 import Services from './Services';
 import WhyChoose from './Whychoose';
 import Footer from '../../components/Footer';
-import './home.css';
+import './home-style.css';
 
 function Home(props) {
   

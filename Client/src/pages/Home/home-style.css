@@ -397,19 +397,4 @@ body[data-mode="chill"] .hero-stack-card {
   .excellence-grid {
     grid-template-columns: 1fr;
   }
-
-  .home-main {
-    width: 100%;
-    padding-inline: var(--page-gutter);
-  }
-
-  .cta-strip {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .action-button {
-    width: 100%;
-    justify-content: center;
-  }
 }

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import "./Home/home.css";
+import "./Home/home-style.css";
 import "../styles/commercial.css";
 import "../styles/market.css";
 import axios from "axios";

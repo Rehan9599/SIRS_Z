@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import "./Home/Home.css";
+import "./Home/home.css";
 import "../styles/commercial.css";
 import "../styles/market.css";
 import axios from "axios";
@@ -81,7 +81,7 @@ function Commercial(props) {
 
 	return (
 		<div className="commercial-page">
-			<Header showAuth={props.isLogged} onLogout={props.onLogout} page="commercial" />
+			<Header showAuth={props.isLogged} onLogout={props.onLogout} page="commercial" userName={props.userName} isAdmin={props.isAdmin} isWorker={props.isWorker} />
 
 			<main className="commercial-flow">
 				<section className="commercial-hero">

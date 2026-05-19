@@ -95,6 +95,181 @@ async function runSchemaQueries() {
   }
 }
 
+async function ensureUserAccount({ name, email, password, phone, city, role, companyName, jobRole, addressLine }) {
+  const existingUser = await getUserByEmail(email);
+  if (existingUser) {
+    return existingUser;
+  }
+
+  await createUser({
+    name,
+    email,
+    password,
+    phone,
+    city,
+    role,
+    companyName,
+    jobRole,
+    addressLine
+  });
+
+  return getUserByEmail(email);
+}
+
+async function seedDemoDataIfNeeded() {
+  const customer = await ensureUserAccount({
+    name: "Demo Customer",
+    email: "customer.demo@readycool.local",
+    password: "Customer@123",
+    phone: "9990001001",
+    city: "Lahore",
+    role: "user",
+    companyName: "Demo Cooling Pvt Ltd",
+    jobRole: "Operations Lead",
+    addressLine: "Demo Market, Lahore"
+  });
+
+  const workerCandidate = await ensureUserAccount({
+    name: "Demo Worker",
+    email: "worker.demo@readycool.local",
+    password: "Worker@123",
+    phone: "9990001002",
+    city: "Lahore",
+    role: "worker",
+    companyName: "ReadyCool Services",
+    jobRole: "Technician",
+    addressLine: "Service Yard, Lahore"
+  });
+
+  const customer2 = await ensureUserAccount({
+    name: "Demo Buyer",
+    email: "buyer.demo@readycool.local",
+    password: "Buyer@123",
+    phone: "9990001003",
+    city: "Karachi",
+    role: "user",
+    companyName: "Harbor Logistics",
+    jobRole: "Procurement",
+    addressLine: "Port Area, Karachi"
+  });
+
+  const [purchasesCountRows] = await tryOptionalQuery("SELECT COUNT(*) AS count FROM purchases", []);
+  if ((purchasesCountRows?.[0]?.count ?? 0) === 0) {
+    await pool.execute(
+      `INSERT INTO purchases (buyer_id, sell_id, item_name, price, status)
+       VALUES
+        (?, NULL, 'Used 3-Ton Split AC', 185000, 'Recorded'),
+        (?, NULL, 'Condensing Unit 5HP', 245000, 'Recorded')`,
+      [customer2.userID, customer.userID]
+    );
+  }
+
+  const [serviceCountRows] = await tryOptionalQuery("SELECT COUNT(*) AS count FROM service_requests", []);
+  if ((serviceCountRows?.[0]?.count ?? 0) === 0) {
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      const [requestOne] = await connection.execute(
+        `INSERT INTO service_requests (user_id, request_type, status)
+         VALUES (?, 'Service Visit', 'Open')`,
+        [customer.userID]
+      );
+      const requestOneId = requestOne.insertId;
+      await connection.execute(
+        `INSERT INTO service_request_details
+          (request_id, title, equipment_category, brand, model, city, urgency, notes, imageUrl)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          requestOneId,
+          'Office AC not cooling',
+          'Air Conditioner',
+          'Haier',
+          'HSU-18',
+          'Lahore',
+          'High',
+          'Second floor office unit needs urgent inspection.',
+          null
+        ]
+      );
+
+      const [requestTwo] = await connection.execute(
+        `INSERT INTO service_requests (user_id, request_type, status)
+         VALUES (?, 'AMC', 'Open')`,
+        [customer2.userID]
+      );
+      const requestTwoId = requestTwo.insertId;
+      await connection.execute(
+        `INSERT INTO service_request_details
+          (request_id, title, equipment_category, brand, model, city, urgency, notes, imageUrl)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          requestTwoId,
+          'AMC contract for warehouse coolers',
+          'Cold Room',
+          'Carrier',
+          'CRX-40',
+          'Karachi',
+          'Medium',
+          'Need quarterly maintenance coverage and emergency response.',
+          null
+        ]
+      );
+
+      const [requestThree] = await connection.execute(
+        `INSERT INTO service_requests (user_id, request_type, status)
+         VALUES (?, 'Tender', 'Open')`,
+        [customer.userID]
+      );
+      const requestThreeId = requestThree.insertId;
+      await connection.execute(
+        `INSERT INTO service_request_details
+          (request_id, title, equipment_category, brand, model, city, urgency, notes, imageUrl)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          requestThreeId,
+          'Tender for rooftop HVAC upgrade',
+          'HVAC',
+          'Daikin',
+          'RTU-12',
+          'Lahore',
+          'Low',
+          'Requesting a commercial quote for phased equipment replacement.',
+          null
+        ]
+      );
+
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+
+  const [workerCountRows] = await tryOptionalQuery("SELECT COUNT(*) AS count FROM workers", []);
+  if ((workerCountRows?.[0]?.count ?? 0) === 0) {
+    const worker = await getWorkerByUserId(workerCandidate.userID);
+    if (worker) {
+      await pool.execute(
+        `UPDATE workers
+         SET status = 'Active', availability_status = 'Full-time', onboarded = 1
+         WHERE workerID = ?`,
+        [worker.workerID]
+      );
+
+      await pool.execute(
+        `UPDATE worker_profiles
+         SET qualifications = ?, experience_years = ?, service_specialization = ?, certifications = ?
+         WHERE worker_id = ?`,
+        ['Diploma in HVAC', 4, 'Cooling system installation and maintenance', 'EPA Refrigerant Handling', worker.workerID]
+      );
+    }
+  }
+}
+
 async function getUserByEmail(email) {
   const [rows] = await pool.execute(
     "SELECT userID, userName, email, passwords FROM users WHERE email = ? LIMIT 1",
@@ -125,7 +300,7 @@ async function getUserById(userId) {
   return rows[0] || null;
 }
 
-async function createUser({ name, email, password, phone, companyName, jobRole, city, addressLine }) {
+async function createUser({ name, email, password, phone, companyName, jobRole, city, addressLine, role }) {
   if (password.length > PASSWORD_MAX_CHARS) {
     throw new Error(`Password must be ${PASSWORD_MAX_CHARS} characters or fewer for the current database setup.`);
   }
@@ -143,6 +318,9 @@ async function createUser({ name, email, password, phone, companyName, jobRole, 
       [name, email, passwordHash]
     );
 
+    const userId = result.insertId;
+
+    // Create user profile
     await connection.execute(
       `INSERT INTO user_profiles (user_id, phone, company_name, job_role, city, address_line)
        VALUES (?, ?, ?, ?, ?, ?)
@@ -152,7 +330,307 @@ async function createUser({ name, email, password, phone, companyName, jobRole, 
          job_role = VALUES(job_role),
          city = VALUES(city),
          address_line = VALUES(address_line)`,
-      [result.insertId, phone || null, companyName || null, jobRole || null, city || null, addressLine || null]
+      [userId, phone || null, companyName || null, jobRole || null, city || null, addressLine || null]
+    );
+
+    // If role is worker, create worker record
+    if (role === "worker") {
+      await connection.execute(
+        `INSERT INTO workers (user_id, role, status, phone, city, onboarded)
+         VALUES (?, ?, 'Active', ?, ?, 0)`,
+        [userId, "Service Technician", phone || null, city || null]
+      );
+
+      // Create empty worker profile
+      const [workerResult] = await connection.execute(
+        "SELECT workerID FROM workers WHERE user_id = ? LIMIT 1",
+        [userId]
+      );
+
+      const workerId = workerResult[0].workerID;
+      await connection.execute(
+        `INSERT INTO worker_profiles (worker_id, qualifications, experience_years, service_specialization)
+         VALUES (?, NULL, NULL, NULL)`,
+        [workerId]
+      );
+    }
+
+    await connection.commit();
+    return result;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function getWorkerByUserId(userId) {
+  const [rows] = await pool.execute(
+    `SELECT
+      w.workerID,
+      w.user_id,
+      w.role,
+      w.status,
+      w.phone,
+      w.city,
+      w.availability_status,
+      w.onboarded,
+      wp.qualifications,
+      wp.experience_years,
+      wp.service_specialization,
+      wp.certifications
+    FROM workers w
+    LEFT JOIN worker_profiles wp ON wp.worker_id = w.workerID
+    WHERE w.user_id = ?
+    LIMIT 1`,
+    [userId]
+  );
+  return rows[0] || null;
+}
+
+async function getAllWorkers() {
+  const rows = await tryOptionalQuery(
+    `SELECT
+      w.workerID,
+      w.user_id,
+      u.userName,
+      u.email,
+      w.role,
+      w.status,
+      w.phone,
+      w.city,
+      w.availability_status,
+      w.onboarded,
+      wp.qualifications,
+      wp.experience_years,
+      wp.service_specialization,
+      wp.certifications,
+      COUNT(wa.assignment_id) AS activeAssignments
+    FROM workers w
+    LEFT JOIN users u ON u.userID = w.user_id
+    LEFT JOIN worker_profiles wp ON wp.worker_id = w.workerID
+    LEFT JOIN worker_assignments wa ON wa.worker_id = w.workerID AND wa.status IN ('Assigned', 'In Progress')
+    GROUP BY w.workerID
+    ORDER BY w.status DESC, w.created_at DESC`
+  );
+  return rows || [];
+}
+
+async function getAdminUsersPayload() {
+  const rows = await tryOptionalQuery(
+    `SELECT
+      u.userID AS id,
+      u.userName,
+      u.email,
+      u.created_at,
+      p.phone,
+      p.company_name,
+      p.job_role,
+      p.city,
+      p.address_line,
+      w.workerID,
+      w.role AS workerRole,
+      w.status AS workerStatus,
+      w.availability_status,
+      w.onboarded,
+      COALESCE(wa.activeAssignments, 0) AS activeAssignments
+    FROM users u
+    LEFT JOIN user_profiles p ON p.user_id = u.userID
+    LEFT JOIN workers w ON w.user_id = u.userID
+    LEFT JOIN (
+      SELECT worker_id, COUNT(*) AS activeAssignments
+      FROM worker_assignments
+      WHERE status IN ('Assigned', 'In Progress')
+      GROUP BY worker_id
+    ) wa ON wa.worker_id = w.workerID
+    ORDER BY u.created_at DESC`
+  );
+
+  const users = rows || [];
+  const workerUsers = users.filter((user) => Boolean(user.workerID));
+
+  return {
+    summary: {
+      totalUsers: users.length,
+      workerAccounts: workerUsers.length,
+      onboardedWorkers: workerUsers.filter((user) => user.onboarded).length
+    },
+    users,
+    workerUsers
+  };
+}
+
+async function updateWorkerOnboarding(workerId, { role, qualifications, experience_years, certifications, availability_status }) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Update worker record
+    await connection.execute(
+      `UPDATE workers
+       SET role = ?, availability_status = ?, onboarded = 1
+       WHERE workerID = ?`,
+      [role || "Service Technician", availability_status || "Full-time", workerId]
+    );
+
+    // Update worker profile
+    await connection.execute(
+      `UPDATE worker_profiles
+       SET qualifications = ?, experience_years = ?, certifications = ?
+       WHERE worker_id = ?`,
+      [qualifications || null, experience_years || null, certifications || null, workerId]
+    );
+
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+async function getWorkerAssignments(workerId) {
+  const [rows] = await pool.execute(
+    `SELECT
+      wa.assignment_id,
+      wa.worker_id,
+      wa.request_id,
+      wa.status,
+      wa.assigned_at,
+      wa.completed_at,
+      wa.notes,
+      sr.request_type,
+      sr.user_id,
+      sr.status AS requestStatus,
+      sr.created_at,
+      u.userName,
+      u.email,
+      srd.title,
+      srd.equipment_category,
+      srd.brand,
+      srd.model,
+      srd.city,
+      srd.urgency,
+      srd.notes AS requestNotes,
+      srd.imageUrl
+    FROM worker_assignments wa
+    JOIN workers w ON w.workerID = wa.worker_id
+    JOIN service_requests sr ON sr.requestID = wa.request_id
+    LEFT JOIN service_request_details srd ON srd.request_id = sr.requestID
+    LEFT JOIN users u ON u.userID = sr.user_id
+    WHERE wa.worker_id = ?
+    ORDER BY wa.assigned_at DESC`,
+    [workerId]
+  );
+  return rows;
+}
+
+async function getOpenWorkerRequests(worker) {
+  const workerCity = (worker?.city || "").trim();
+  const cityFilter = workerCity ? "AND (d.city = ? OR d.city IS NULL OR d.city = '')" : "";
+  const values = workerCity ? [workerCity] : [];
+
+  const [rows] = await pool.execute(
+    `SELECT
+      sr.requestID AS request_id,
+      sr.user_id,
+      sr.request_type,
+      sr.status,
+      sr.created_at,
+      u.userName,
+      u.email,
+      d.title,
+      d.equipment_category,
+      d.brand,
+      d.model,
+      d.city,
+      d.urgency,
+      d.notes,
+      d.imageUrl
+    FROM service_requests sr
+    LEFT JOIN service_request_details d ON d.request_id = sr.requestID
+    LEFT JOIN users u ON u.userID = sr.user_id
+    WHERE sr.status IN ('Open', 'Pending')
+      AND NOT EXISTS (
+        SELECT 1
+        FROM worker_assignments wa
+        WHERE wa.request_id = sr.requestID
+      )
+      ${cityFilter}
+    ORDER BY sr.requestID DESC
+    LIMIT 30`,
+    values
+  );
+
+  return rows;
+}
+
+async function getWorkerHomePayload(userId) {
+  const worker = await getWorkerByUserId(userId);
+  if (!worker) {
+    return null;
+  }
+
+  const [assignments, openRequests] = await Promise.all([
+    getWorkerAssignments(worker.workerID),
+    getOpenWorkerRequests(worker)
+  ]);
+
+  const summary = {
+    totalAssignments: assignments.length,
+    completedAssignments: assignments.filter((assignment) => assignment.status === "Completed").length,
+    inProgressAssignments: assignments.filter((assignment) => assignment.status === "In Progress").length,
+    assignedAssignments: assignments.filter((assignment) => assignment.status === "Assigned").length,
+    openRequests: openRequests.length
+  };
+
+  return {
+    worker,
+    assignments,
+    openRequests,
+    summary
+  };
+}
+
+async function assignRequestToWorker(workerId, requestId) {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [requestRows] = await connection.execute(
+      "SELECT requestID, status FROM service_requests WHERE requestID = ? LIMIT 1",
+      [requestId]
+    );
+
+    if (!requestRows.length) {
+      throw new Error("Request not found.");
+    }
+
+    if (!["Open", "Pending"].includes(requestRows[0].status)) {
+      throw new Error("This request is no longer open.");
+    }
+
+    const [existing] = await connection.execute(
+      "SELECT assignment_id FROM worker_assignments WHERE request_id = ? LIMIT 1",
+      [requestId]
+    );
+
+    if (existing.length > 0) {
+      throw new Error("This request is already assigned.");
+    }
+
+    const [result] = await connection.execute(
+      `INSERT INTO worker_assignments (worker_id, request_id, status)
+       VALUES (?, ?, 'Assigned')`,
+      [workerId, requestId]
+    );
+
+    await connection.execute(
+      "UPDATE service_requests SET status = 'Assigned' WHERE requestID = ?",
+      [requestId]
     );
 
     await connection.commit();
@@ -163,6 +641,21 @@ async function createUser({ name, email, password, phone, companyName, jobRole, 
   } finally {
     connection.release();
   }
+}
+
+async function updateAssignmentStatus(assignmentId, status) {
+  const validStatuses = ["Assigned", "In Progress", "Completed", "Cancelled"];
+  if (!validStatuses.includes(status)) {
+    throw new Error(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
+  }
+
+  const completedAt = status === "Completed" ? new Date() : null;
+  await pool.execute(
+    `UPDATE worker_assignments
+     SET status = ?, completed_at = ?
+     WHERE assignment_id = ?`,
+    [status, completedAt, assignmentId]
+  );
 }
 
 async function verifyPassword(enteredPassword, storedPassword) {
@@ -467,6 +960,112 @@ async function getDashboardPayload(userId) {
   };
 }
 
+async function getAdminServiceRequests() {
+  const [rows] = await pool.execute(
+    `SELECT
+      r.requestID AS id,
+      r.user_id,
+      u.userName,
+      u.email,
+      r.request_type,
+      r.status,
+      r.created_at,
+      d.title,
+      d.equipment_category,
+      d.brand,
+      d.model,
+      d.city,
+      d.urgency,
+      d.notes,
+      d.imageUrl
+    FROM service_requests r
+    LEFT JOIN service_request_details d ON d.request_id = r.requestID
+    LEFT JOIN users u ON u.userID = r.user_id
+    ORDER BY r.requestID DESC`
+  );
+
+  return rows;
+}
+
+async function getAdminDashboardPayload() {
+  const recentListings = await tryOptionalQuery(
+    `SELECT
+      s.sellID AS id,
+      s.item_name,
+      s.price,
+      s.status,
+      s.created_at,
+      u.userName,
+      u.email,
+      COALESCE(lv.verification_status, 'Pending Review') AS verificationStatus
+    FROM sell s
+    LEFT JOIN users u ON u.userID = s.user_id
+    LEFT JOIN listing_verifications lv ON lv.sell_id = s.sellID
+    ORDER BY s.sellID DESC
+    LIMIT 8`
+  );
+
+  const recentPurchases = await tryOptionalQuery(
+    `SELECT
+      p.purchaseID AS id,
+      p.item_name,
+      p.price,
+      p.status,
+      p.purchased_at,
+      u.userName,
+      u.email
+    FROM purchases p
+    LEFT JOIN users u ON u.userID = p.buyer_id
+    ORDER BY p.purchaseID DESC
+    LIMIT 8`
+  );
+
+  const serviceRequests = await tryOptionalQuery(
+    `SELECT
+      r.requestID AS id,
+      r.user_id,
+      u.userName,
+      u.email,
+      r.request_type,
+      r.status,
+      r.created_at,
+      d.title,
+      d.equipment_category,
+      d.brand,
+      d.model,
+      d.city,
+      d.urgency,
+      d.notes,
+      d.imageUrl
+    FROM service_requests r
+    LEFT JOIN service_request_details d ON d.request_id = r.requestID
+    LEFT JOIN users u ON u.userID = r.user_id
+    ORDER BY r.requestID DESC
+    LIMIT 30`
+  );
+
+  const listingRows = recentListings || [];
+  const purchaseRows = recentPurchases || [];
+  const serviceRequestRows = serviceRequests || [];
+  const serviceVisits = serviceRequestRows.filter((request) => request.request_type === "Service Visit");
+  const amcTenderRequests = serviceRequestRows.filter((request) => ["AMC", "Tender"].includes(request.request_type));
+
+  return {
+    summary: {
+      listingCount: listingRows.length,
+      purchaseCount: purchaseRows.length,
+      serviceRequestCount: serviceRequestRows.length,
+      serviceVisitCount: serviceVisits.length,
+      amcTenderCount: amcTenderRequests.length
+    },
+    recentListings: listingRows,
+    recentPurchases: purchaseRows,
+    serviceRequests: serviceRequestRows,
+    serviceVisits,
+    amcTenderRequests
+  };
+}
+
 async function addItem(id, item, description, price, quantity, status, imageUrl) {
   const [result] = await pool.execute(
     "INSERT INTO sell (user_id, item_name, description, price, quantity, status, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -478,6 +1077,7 @@ async function addItem(id, item, description, price, quantity, status, imageUrl)
 
 (async () => {
   await runSchemaQueries();
+  await seedDemoDataIfNeeded();
   await testDbConnection();
 })();
 
@@ -491,7 +1091,7 @@ app.get("/api/health", (req, res) => {
 
 app.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required." });
@@ -507,11 +1107,31 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
+    // If role is specified, verify it matches the user's role
+    if (role === "worker") {
+      const worker = await getWorkerByUserId(user.userID);
+      if (!worker) {
+        return res.status(401).json({ message: "Worker account not found for this user." });
+      }
+
+      return res.json({
+        message: "login_success",
+        userId: user.userID,
+        name: user.userName,
+        email: user.email,
+        role: "worker",
+        isWorker: true,
+        needsOnboarding: !worker.onboarded
+      });
+    }
+
     return res.json({
       message: "login_success",
       userId: user.userID,
       name: user.userName,
-      email: user.email
+      email: user.email,
+      role: "user",
+      isWorker: false
     });
   } catch (err) {
     return res.status(500).json({ message: "Unable to log in right now.", error: err.message });
@@ -520,7 +1140,7 @@ app.post("/login", async (req, res) => {
 
 app.post("/signup", async (req, res) => {
   try {
-    const { name, email, password, phone, companyName, jobRole, city, addressLine } = req.body;
+    const { name, email, password, phone, companyName, jobRole, city, addressLine, role } = req.body;
 
     if (!name || !email || !password || !phone || !city) {
       return res.status(400).json({ message: "Name, email, password, phone, and city are required." });
@@ -531,8 +1151,13 @@ app.post("/signup", async (req, res) => {
       return res.status(409).json({ message: "An account already exists for this email." });
     }
 
-    const result = await createUser({ name, email, password, phone, companyName, jobRole, city, addressLine });
-    return res.status(201).json({ message: "signup_success", userId: result.insertId });
+    const result = await createUser({ name, email, password, phone, companyName, jobRole, city, addressLine, role });
+    return res.status(201).json({
+      message: "signup_success",
+      userId: result.insertId,
+      role: role || "user",
+      needsOnboarding: role === "worker"
+    });
   } catch (err) {
     if (err.message.includes("Password must be")) {
       return res.status(400).json({ message: err.message });
@@ -754,6 +1379,24 @@ app.post("/service-requests", upload.single("image"), async (req, res) => {
   }
 });
 
+app.get("/admin/service-requests", async (req, res) => {
+  try {
+    const requests = await getAdminServiceRequests();
+    return res.json({ message: "admin_service_requests_loaded", requests });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to load admin service requests right now.", error: error.message });
+  }
+});
+
+app.get("/admin/dashboard", async (req, res) => {
+  try {
+    const payload = await getAdminDashboardPayload();
+    return res.json({ message: "admin_dashboard_loaded", ...payload });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to load admin dashboard right now.", error: error.message });
+  }
+});
+
 app.get("/buy", async (req, res) => {
   try {
     const { id, q, condition, category } = req.query;
@@ -839,6 +1482,172 @@ app.get("/dashboard/:id", async (req, res) => {
   } catch (error) {
     console.error("[Dashboard Error]", error);
     return res.status(500).json({ message: "Unable to load dashboard right now.", error: error.message });
+  }
+});
+
+// Worker Endpoints
+app.post("/worker/onboard", async (req, res) => {
+  try {
+    const { userId, role, qualifications, experience_years, certifications, availability_status } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required." });
+    }
+
+    const worker = await getWorkerByUserId(userId);
+    if (!worker) {
+      return res.status(404).json({ message: "Worker account not found." });
+    }
+
+    await updateWorkerOnboarding(worker.workerID, {
+      role,
+      qualifications,
+      experience_years,
+      certifications,
+      availability_status
+    });
+
+    return res.json({ message: "worker_onboarded", workerId: worker.workerID });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to complete worker onboarding.", error: error.message });
+  }
+});
+
+app.get("/worker/assignments/:workerId", async (req, res) => {
+  try {
+    const workerId = Number(req.params.workerId);
+    if (!Number.isFinite(workerId)) {
+      return res.status(400).json({ message: "Invalid worker id." });
+    }
+
+    const assignments = await getWorkerAssignments(workerId);
+    return res.json({ message: "worker_assignments_loaded", assignments });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to load worker assignments.", error: error.message });
+  }
+});
+
+// Get assignments for currently logged-in worker by user ID
+app.get("/worker/assignments/current/:userId", async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(400).json({ message: "Invalid user id." });
+    }
+
+    // Get worker by user ID
+    const worker = await getWorkerByUserId(userId);
+    if (!worker) {
+      return res.status(404).json({ message: "Worker account not found." });
+    }
+
+    const assignments = await getWorkerAssignments(worker.workerID);
+    return res.json({ message: "worker_assignments_loaded", assignments });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to load worker assignments.", error: error.message });
+  }
+});
+
+app.get("/worker/home/current/:userId", async (req, res) => {
+  try {
+    const userId = Number(req.params.userId);
+    if (!Number.isFinite(userId)) {
+      return res.status(400).json({ message: "Invalid user id." });
+    }
+
+    const payload = await getWorkerHomePayload(userId);
+    if (!payload) {
+      return res.status(404).json({ message: "Worker account not found." });
+    }
+
+    return res.json({ message: "worker_home_loaded", ...payload });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to load worker home right now.", error: error.message });
+  }
+});
+
+app.post("/worker/volunteer", async (req, res) => {
+  try {
+    const { userId, requestId } = req.body;
+    const userId_num = Number(userId);
+    const requestId_num = Number(requestId);
+
+    if (!Number.isFinite(userId_num) || !Number.isFinite(requestId_num)) {
+      return res.status(400).json({ message: "userId and requestId are required." });
+    }
+
+    const worker = await getWorkerByUserId(userId_num);
+    if (!worker) {
+      return res.status(404).json({ message: "Worker account not found." });
+    }
+
+    const result = await assignRequestToWorker(worker.workerID, requestId_num);
+    return res.status(201).json({ message: "request_volunteered", assignmentId: result.insertId });
+  } catch (error) {
+    if (error.message.includes("already assigned") || error.message.includes("no longer open")) {
+      return res.status(409).json({ message: error.message });
+    }
+
+    return res.status(500).json({ message: "Unable to volunteer for request.", error: error.message });
+  }
+});
+
+app.patch("/worker/assignments/:assignmentId", async (req, res) => {
+  try {
+    const assignmentId = Number(req.params.assignmentId);
+    const { status } = req.body;
+
+    if (!Number.isFinite(assignmentId)) {
+      return res.status(400).json({ message: "Invalid assignment id." });
+    }
+
+    if (!status) {
+      return res.status(400).json({ message: "status is required." });
+    }
+
+    await updateAssignmentStatus(assignmentId, status);
+    return res.json({ message: "assignment_updated", assignmentId, status });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to update assignment.", error: error.message });
+  }
+});
+
+app.get("/admin/workers", async (req, res) => {
+  try {
+    const workers = await getAllWorkers();
+    return res.json({ message: "admin_workers_loaded", workers });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to load workers.", error: error.message });
+  }
+});
+
+app.get("/admin/users", async (req, res) => {
+  try {
+    const payload = await getAdminUsersPayload();
+    return res.json({ message: "admin_users_loaded", ...payload });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to load users.", error: error.message });
+  }
+});
+
+app.post("/admin/assign-request", async (req, res) => {
+  try {
+    const { workerId, requestId } = req.body;
+
+    const workerId_num = Number(workerId);
+    const requestId_num = Number(requestId);
+
+    if (!Number.isFinite(workerId_num) || !Number.isFinite(requestId_num)) {
+      return res.status(400).json({ message: "workerId and requestId are required." });
+    }
+
+    const result = await assignRequestToWorker(workerId_num, requestId_num);
+    return res.status(201).json({ message: "request_assigned", assignmentId: result.insertId });
+  } catch (error) {
+    if (error.message.includes("already assigned")) {
+      return res.status(409).json({ message: error.message });
+    }
+    return res.status(500).json({ message: "Unable to assign request.", error: error.message });
   }
 });
 

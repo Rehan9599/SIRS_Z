@@ -16,6 +16,7 @@ import "../styles/auth.css";
 
 export default function Signup(props) {
 	const navigate = useNavigate();
+	const [role, setRole] = useState("user");
 	const [formData, setFormData] = useState({
 		name: "",
 		email: "",
@@ -46,11 +47,17 @@ export default function Signup(props) {
 					companyName: formData.companyName,
 					jobRole: formData.jobRole,
 					city: formData.city,
-					addressLine: formData.addressLine
+					addressLine: formData.addressLine,
+					role: role
 				}
 			);
 			if (response.status === 201 || response.data.message === "signup_success") {
-				navigate("/login");
+				if (role === "worker") {
+					// Worker needs to complete onboarding after signup
+					navigate("/login");
+				} else {
+					navigate("/login");
+				}
 				return;
 			}
 			setErrorMessage(response.data?.message || "Unable to create your account.");
@@ -103,6 +110,35 @@ export default function Signup(props) {
 					<div className="auth-card__top">
 						<h2>Sign up</h2>
 						<p>Create the account you will use for the marketplace and service desk.</p>
+					</div>
+
+					{/* Role Selector */}
+					<div className="auth-role-selector">
+						<div className="auth-role-label">Account type</div>
+						<div className="auth-role-options">
+							<label className={`auth-role-option ${role === "user" ? "active" : ""}`}>
+								<input
+									type="radio"
+									name="accountRole"
+									value="user"
+									checked={role === "user"}
+									onChange={(e) => setRole(e.target.value)}
+								/>
+								<span className="auth-role-text">Customer</span>
+								<span className="auth-role-desc">Buy, sell, and request services</span>
+							</label>
+							<label className={`auth-role-option ${role === "worker" ? "active" : ""}`}>
+								<input
+									type="radio"
+									name="accountRole"
+									value="worker"
+									checked={role === "worker"}
+									onChange={(e) => setRole(e.target.value)}
+								/>
+								<span className="auth-role-text">Service Worker</span>
+								<span className="auth-role-desc">Handle service requests and assignments</span>
+							</label>
+						</div>
 					</div>
 
 					<form className="auth-form" onSubmit={handleSubmit}>

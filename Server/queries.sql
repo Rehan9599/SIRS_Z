@@ -121,4 +121,49 @@ CREATE TABLE IF NOT EXISTS inquiries (
   CONSTRAINT fk_inquiries_sell FOREIGN KEY (sell_id) REFERENCES sell(sellID) ON DELETE CASCADE
 );
 
+-- Worker Management Tables
+CREATE TABLE IF NOT EXISTS workers (
+  workerID INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  role VARCHAR(80) NOT NULL,
+  status VARCHAR(30) DEFAULT 'Active',
+  phone VARCHAR(20) NULL,
+  city VARCHAR(80) NULL,
+  availability_status VARCHAR(30) DEFAULT 'Full-time',
+  onboarded TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_workers_user (user_id),
+  CONSTRAINT fk_workers_user FOREIGN KEY (user_id) REFERENCES users(userID) ON DELETE CASCADE,
+  INDEX idx_workers_status (status)
+);
+
+CREATE TABLE IF NOT EXISTS worker_profiles (
+  worker_profile_id INT AUTO_INCREMENT PRIMARY KEY,
+  worker_id INT NOT NULL,
+  qualifications VARCHAR(255) NULL,
+  experience_years INT NULL,
+  service_specialization VARCHAR(200) NULL,
+  certifications VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_worker_profiles_worker (worker_id),
+  CONSTRAINT fk_worker_profiles_worker FOREIGN KEY (worker_id) REFERENCES workers(workerID) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS worker_assignments (
+  assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+  worker_id INT NOT NULL,
+  request_id INT NOT NULL,
+  status VARCHAR(30) DEFAULT 'Assigned',
+  assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP NULL,
+  notes TEXT NULL,
+  INDEX idx_worker_assignments_worker (worker_id),
+  INDEX idx_worker_assignments_request (request_id),
+  INDEX idx_worker_assignments_status (status),
+  CONSTRAINT fk_worker_assignments_worker FOREIGN KEY (worker_id) REFERENCES workers(workerID) ON DELETE CASCADE,
+  CONSTRAINT fk_worker_assignments_request FOREIGN KEY (request_id) REFERENCES service_requests(requestID) ON DELETE CASCADE
+);
+
 -- Intentionally no debug SELECT statements.

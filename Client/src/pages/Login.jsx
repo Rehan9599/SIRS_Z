@@ -11,8 +11,14 @@ import Header from "../components/Header";
 import API_BASE_URL from "../api";
 import "../styles/auth.css";
 
+const ADMIN_LOGIN = {
+	email: "admin@readycool.local",
+	password: "Admin@1234"
+};
+
 export default function Login(props) {
 	const navigate = useNavigate();
+	const [role, setRole] = useState("user");
 	const [showPassword, setShowPassword] = useState(false);
 	const [errorMessage, setErrorMessage] = useState("");
 	const [formData, setFormData]= useState({
@@ -28,21 +34,57 @@ export default function Login(props) {
   };
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+
+		if (formData.email === ADMIN_LOGIN.email && formData.password === ADMIN_LOGIN.password) {
+			props.setIsLogged(true);
+			props.setIsLoggedId(0);
+			if (props.setIsAdmin) {
+				props.setIsAdmin(true);
+			}
+			if (props.setIsWorker) {
+				props.setIsWorker(false);
+			}
+			if (props.setUserName) {
+				props.setUserName("Admin");
+			}
+			setErrorMessage("");
+			navigate("/admin/dashboard", { replace: true });
+			return;
+		}
+
 		try {
 			const response = await axios.post(
 				`${API_BASE_URL}/login`, {
 					email: formData.email,
-					password: formData.password
+					password: formData.password,
+					role: role
 				}
 			);
 			if(response.data.message === "login_success"){
 				props.setIsLogged(true);
 				props.setIsLoggedId(response.data.userId);
+				if (props.setIsAdmin) {
+					props.setIsAdmin(false);
+				}
 				if (props.setUserName) {
 					props.setUserName(response.data.name || "");
 				}
+				if (props.setIsWorker) {
+					props.setIsWorker(response.data.isWorker || false);
+				}
+				if (props.setNeedsWorkerOnboarding) {
+					props.setNeedsWorkerOnboarding(response.data.needsOnboarding || false);
+				}
 				setErrorMessage("");
-			    navigate("/");
+				
+				// If worker needs onboarding, go to onboarding page
+				if (response.data.isWorker && response.data.needsOnboarding) {
+					navigate("/worker/onboard");
+				} else if (response.data.isWorker) {
+					navigate("/worker/dashboard");
+				} else {
+					navigate("/");
+				}
 			}else{
 				setFormData({
 		        email:"",
@@ -63,7 +105,7 @@ export default function Login(props) {
 
 	return (
 		<div className="auth-page">
-			<Header showAuth={props.isLogged} onLogout={props.onLogout} page="login" />
+			<Header showAuth={props.isLogged} onLogout={props.onLogout} page="login" userName={props.userName} isAdmin={props.isAdmin} isWorker={props.isWorker} />
 			<main className="auth-shell">
 				<aside className="auth-visual">
 					<div className="auth-visual__title">
@@ -99,6 +141,35 @@ export default function Login(props) {
 					<div className="auth-card__top">
 						<h2>Sign in</h2>
 						<p>Use your account to continue to the marketplace and commercial desk.</p>
+					</div>
+
+					{/* Role Selector */}
+					<div className="auth-role-selector">
+						<div className="auth-role-label">Account type</div>
+						<div className="auth-role-options">
+							<label className={`auth-role-option ${role === "user" ? "active" : ""}`}>
+								<input
+									type="radio"
+									name="accountRole"
+									value="user"
+									checked={role === "user"}
+									onChange={(e) => setRole(e.target.value)}
+								/>
+								<span className="auth-role-text">Customer</span>
+								<span className="auth-role-desc">Access marketplace & services</span>
+							</label>
+							<label className={`auth-role-option ${role === "worker" ? "active" : ""}`}>
+								<input
+									type="radio"
+									name="accountRole"
+									value="worker"
+									checked={role === "worker"}
+									onChange={(e) => setRole(e.target.value)}
+								/>
+								<span className="auth-role-text">Service Worker</span>
+								<span className="auth-role-desc">View assignments & tasks</span>
+							</label>
+						</div>
 					</div>
 
 					<form className="auth-form" onSubmit={handleSubmit}>

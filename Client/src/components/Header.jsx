@@ -4,11 +4,13 @@ import AcUnitOutlinedIcon from "@mui/icons-material/AcUnitOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
 import LoginOutlinedIcon from "@mui/icons-material/LoginOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import DashboardCustomizeOutlinedIcon from "@mui/icons-material/DashboardCustomizeOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+import PeopleOutlineOutlinedIcon from "@mui/icons-material/PeopleOutlineOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import WbSunnyOutlinedIcon from "@mui/icons-material/WbSunnyOutlined";
@@ -56,6 +58,14 @@ function Header(props) {
     setMode((previousMode) => (previousMode === "default" ? "chill" : "default"));
   };
 
+  const isAdmin = Boolean(props.isAdmin);
+  const isWorker = Boolean(props.isWorker);
+  const isWorkerPortal = isWorker && !isAdmin;
+  const brandTarget = isAdmin ? "/admin/dashboard" : isWorkerPortal ? "/worker/dashboard" : "/";
+  const workerHomeTarget = "/worker/dashboard";
+  const workerOpenRequestsTarget = "/worker/dashboard#open-requests";
+  const workerWorkTarget = "/worker/dashboard#my-work";
+
   const handleLogout = () => {
     if (props.onLogout) {
       props.onLogout();
@@ -69,7 +79,7 @@ function Header(props) {
     <>
       <header className="site-header">
         <div className="site-header__inner">
-        <Link to="/" className="brand">
+        <Link to={brandTarget} className="brand">
           <span className="brand__mark">
             <AcUnitOutlinedIcon fontSize="small" />
           </span>
@@ -89,25 +99,20 @@ function Header(props) {
         </button>
 
         <nav className="site-nav">
-          <Link to="/" className="nav-link">
-            <HomeOutlinedIcon fontSize="small" />
-            <span>Home</span>
-          </Link>
-          <Link to="/commercial" className="nav-link nav-link--primary">
-            <StorefrontOutlinedIcon fontSize="small" />
-            <span>Commercial</span>
-          </Link>
+          {!isAdmin && !isWorkerPortal && (
+            <>
+              <Link to="/" className="nav-link">
+                <HomeOutlinedIcon fontSize="small" />
+                <span>Home</span>
+              </Link>
+              <Link to="/commercial" className="nav-link nav-link--primary">
+                <StorefrontOutlinedIcon fontSize="small" />
+                <span>Commercial</span>
+              </Link>
+            </>
+          )}
           {props.showAuth ? (
             <>
-              <Link to="/buy" className="nav-link">
-                <Inventory2OutlinedIcon fontSize="small" />
-                <span>Buy</span>
-              </Link>
-              <Link to="/sell" className="nav-link">
-                <SellOutlinedIcon fontSize="small" />
-                <span>Sell</span>
-              </Link>
-
               <div className="profile-menu" ref={menuRef}>
                 <button
                   type="button"
@@ -123,13 +128,89 @@ function Header(props) {
 
                 {menuOpen && (
                   <div className="profile-menu__panel" role="menu">
+                    {isAdmin ? (
+                      <>
+                        <Link to="/admin/dashboard" className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                          <DashboardCustomizeOutlinedIcon fontSize="small" />
+                          <span>Admin Dashboard</span>
+                        </Link>
+                        <Link to="/admin/users" className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                          <PeopleOutlineOutlinedIcon fontSize="small" />
+                          <span>Users</span>
+                        </Link>
+                        <Link to="/admin/workers" className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                          <PersonOutlineOutlinedIcon fontSize="small" />
+                          <span>Workers</span>
+                        </Link>
+                        <Link to="/admin/revenue" className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                          <Inventory2OutlinedIcon fontSize="small" />
+                          <span>Revenue</span>
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link to="/profile" className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                          <PersonOutlineOutlinedIcon fontSize="small" />
+                          <span>View / Edit Profile</span>
+                        </Link>
+                        <Link to="/dashboard" className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                          <DashboardCustomizeOutlinedIcon fontSize="small" />
+                          <span>Dashboard</span>
+                        </Link>
+                      </>
+                    )}
+                    <button type="button" className="profile-menu__item" onClick={toggleMode}>
+                      {mode === "default" ? <DarkModeOutlinedIcon fontSize="small" /> : <WbSunnyOutlinedIcon fontSize="small" />}
+                      <span>{mode === "default" ? "Enable Chill Mode" : "Switch to Light Mode"}</span>
+                    </button>
+                    <button type="button" className="profile-menu__item profile-menu__item--danger" onClick={handleLogout}>
+                      <LogoutOutlinedIcon fontSize="small" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : isWorkerPortal ? (
+            <>
+              <Link to={workerHomeTarget} className="nav-link">
+                <DashboardCustomizeOutlinedIcon fontSize="small" />
+                <span>Worker Home</span>
+              </Link>
+              <Link to={workerOpenRequestsTarget} className="nav-link nav-link--primary">
+                <AssignmentOutlinedIcon fontSize="small" />
+                <span>Open Requests</span>
+              </Link>
+              <Link to={workerWorkTarget} className="nav-link">
+                <Inventory2OutlinedIcon fontSize="small" />
+                <span>My Work</span>
+              </Link>
+              <div className="profile-menu" ref={menuRef}>
+                <button
+                  type="button"
+                  className="nav-link nav-button profile-menu__trigger"
+                  onClick={() => setMenuOpen((previous) => !previous)}
+                  aria-expanded={menuOpen}
+                  aria-haspopup="menu"
+                >
+                  <PersonOutlineOutlinedIcon fontSize="small" />
+                  <span>{props.userName || "Worker"}</span>
+                  <KeyboardArrowDownRoundedIcon fontSize="small" />
+                </button>
+
+                {menuOpen && (
+                  <div className="profile-menu__panel" role="menu">
+                    <Link to={workerHomeTarget} className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                      <DashboardCustomizeOutlinedIcon fontSize="small" />
+                      <span>Worker Home</span>
+                    </Link>
+                    <Link to={workerOpenRequestsTarget} className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                      <AssignmentOutlinedIcon fontSize="small" />
+                      <span>Open Requests</span>
+                    </Link>
                     <Link to="/profile" className="profile-menu__item" onClick={() => setMenuOpen(false)}>
                       <PersonOutlineOutlinedIcon fontSize="small" />
                       <span>View / Edit Profile</span>
-                    </Link>
-                    <Link to="/dashboard" className="profile-menu__item" onClick={() => setMenuOpen(false)}>
-                      <DashboardCustomizeOutlinedIcon fontSize="small" />
-                      <span>Dashboard</span>
                     </Link>
                     <button type="button" className="profile-menu__item" onClick={toggleMode}>
                       {mode === "default" ? <DarkModeOutlinedIcon fontSize="small" /> : <WbSunnyOutlinedIcon fontSize="small" />}
@@ -186,32 +267,78 @@ function Header(props) {
             </div>
 
             <div className="mobile-nav__section">
-              <Link to="/" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
-                <HomeOutlinedIcon fontSize="small" />
-                <span>Home</span>
-              </Link>
-              <Link to="/commercial" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
-                <StorefrontOutlinedIcon fontSize="small" />
-                <span>Commercial</span>
-              </Link>
+              {!isAdmin && !isWorkerPortal ? (
+                <>
+                  <Link to="/" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                    <HomeOutlinedIcon fontSize="small" />
+                    <span>Home</span>
+                  </Link>
+                  <Link to="/commercial" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                    <StorefrontOutlinedIcon fontSize="small" />
+                    <span>Commercial</span>
+                  </Link>
+                </>
+              ) : null}
               {props.showAuth && (
                 <>
-                  <Link to="/buy" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
-                    <Inventory2OutlinedIcon fontSize="small" />
-                    <span>Buy</span>
-                  </Link>
-                  <Link to="/sell" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
-                    <SellOutlinedIcon fontSize="small" />
-                    <span>Sell</span>
-                  </Link>
-                  <Link to="/dashboard" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
-                    <DashboardCustomizeOutlinedIcon fontSize="small" />
-                    <span>Dashboard</span>
-                  </Link>
-                  <Link to="/profile" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
-                    <PersonOutlineOutlinedIcon fontSize="small" />
-                    <span>Profile</span>
-                  </Link>
+                  {isAdmin ? (
+                    <>
+                      <Link to="/admin/dashboard" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <DashboardCustomizeOutlinedIcon fontSize="small" />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                      <Link to="/admin/users" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <PeopleOutlineOutlinedIcon fontSize="small" />
+                        <span>Users</span>
+                      </Link>
+                      <Link to="/admin/workers" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <PersonOutlineOutlinedIcon fontSize="small" />
+                        <span>Workers</span>
+                      </Link>
+                      <Link to="/admin/revenue" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <Inventory2OutlinedIcon fontSize="small" />
+                        <span>Revenue</span>
+                      </Link>
+                    </>
+                  ) : isWorkerPortal ? (
+                    <>
+                      <Link to={workerHomeTarget} className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <DashboardCustomizeOutlinedIcon fontSize="small" />
+                        <span>Worker Home</span>
+                      </Link>
+                      <Link to={workerOpenRequestsTarget} className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <AssignmentOutlinedIcon fontSize="small" />
+                        <span>Open Requests</span>
+                      </Link>
+                      <Link to={workerWorkTarget} className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <Inventory2OutlinedIcon fontSize="small" />
+                        <span>My Work</span>
+                      </Link>
+                      <Link to="/profile" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <PersonOutlineOutlinedIcon fontSize="small" />
+                        <span>Profile</span>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link to="/buy" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <Inventory2OutlinedIcon fontSize="small" />
+                        <span>Buy</span>
+                      </Link>
+                      <Link to="/sell" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <SellOutlinedIcon fontSize="small" />
+                        <span>Sell</span>
+                      </Link>
+                      <Link to="/dashboard" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <DashboardCustomizeOutlinedIcon fontSize="small" />
+                        <span>Dashboard</span>
+                      </Link>
+                      <Link to="/profile" className="mobile-nav-item" onClick={() => setMobileMenuOpen(false)}>
+                        <PersonOutlineOutlinedIcon fontSize="small" />
+                        <span>Profile</span>
+                      </Link>
+                    </>
+                  )}
                 </>
               )}
             </div>

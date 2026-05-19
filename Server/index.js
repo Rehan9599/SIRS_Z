@@ -82,7 +82,10 @@ async function runSchemaQueries() {
     const statements = cleaned
       .split(";")
       .map((statement) => statement.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      // Run schema against currently configured DB from pool and avoid cross-database drift.
+      .filter((statement) => !/^CREATE\s+DATABASE/i.test(statement))
+      .filter((statement) => !/^USE\s+/i.test(statement));
 
     for (const statement of statements) {
       await pool.query(statement);

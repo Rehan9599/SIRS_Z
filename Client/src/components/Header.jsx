@@ -111,8 +111,77 @@ function Header(props) {
               </Link>
             </>
           )}
-          {props.showAuth ? (
+          {isWorkerPortal ? (
             <>
+              <Link to={workerHomeTarget} className="nav-link">
+                <DashboardCustomizeOutlinedIcon fontSize="small" />
+                <span>Worker Home</span>
+              </Link>
+              <Link to={workerOpenRequestsTarget} className="nav-link nav-link--primary">
+                <AssignmentOutlinedIcon fontSize="small" />
+                <span>Open Requests</span>
+              </Link>
+              <Link to={workerWorkTarget} className="nav-link">
+                <Inventory2OutlinedIcon fontSize="small" />
+                <span>My Work</span>
+              </Link>
+              <div className="profile-menu" ref={menuRef}>
+                <button
+                  type="button"
+                  className="nav-link nav-button profile-menu__trigger"
+                  onClick={() => setMenuOpen((previous) => !previous)}
+                  aria-expanded={menuOpen}
+                  aria-haspopup="menu"
+                >
+                  <PersonOutlineOutlinedIcon fontSize="small" />
+                  <span>{props.userName || "Worker"}</span>
+                  <KeyboardArrowDownRoundedIcon fontSize="small" />
+                </button>
+
+                {menuOpen && (
+                  <div className="profile-menu__panel" role="menu">
+                    <Link to={workerHomeTarget} className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                      <DashboardCustomizeOutlinedIcon fontSize="small" />
+                      <span>Worker Home</span>
+                    </Link>
+                    <Link to={workerOpenRequestsTarget} className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                      <AssignmentOutlinedIcon fontSize="small" />
+                      <span>Open Requests</span>
+                    </Link>
+                    <Link to="/profile" className="profile-menu__item" onClick={() => setMenuOpen(false)}>
+                      <PersonOutlineOutlinedIcon fontSize="small" />
+                      <span>View / Edit Profile</span>
+                    </Link>
+                    <button type="button" className="profile-menu__item" onClick={toggleMode}>
+                      {mode === "default" ? <DarkModeOutlinedIcon fontSize="small" /> : <WbSunnyOutlinedIcon fontSize="small" />}
+                      <span>{mode === "default" ? "Enable Chill Mode" : "Switch to Light Mode"}</span>
+                    </button>
+                    <button type="button" className="profile-menu__item profile-menu__item--danger" onClick={handleLogout}>
+                      <LogoutOutlinedIcon fontSize="small" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : props.showAuth ? (
+            <>
+              {!isAdmin && (
+                <>
+                  <Link to="/buy" className="nav-link">
+                    <Inventory2OutlinedIcon fontSize="small" />
+                    <span>Buy</span>
+                  </Link>
+                  <Link to="/sell" className="nav-link">
+                    <SellOutlinedIcon fontSize="small" />
+                    <span>Sell</span>
+                  </Link>
+                  <Link to="/dashboard" className="nav-link">
+                    <DashboardCustomizeOutlinedIcon fontSize="small" />
+                    <span>Dashboard</span>
+                  </Link>
+                </>
+              )}
               <div className="profile-menu" ref={menuRef}>
                 <button
                   type="button"
@@ -159,59 +228,6 @@ function Header(props) {
                         </Link>
                       </>
                     )}
-                    <button type="button" className="profile-menu__item" onClick={toggleMode}>
-                      {mode === "default" ? <DarkModeOutlinedIcon fontSize="small" /> : <WbSunnyOutlinedIcon fontSize="small" />}
-                      <span>{mode === "default" ? "Enable Chill Mode" : "Switch to Light Mode"}</span>
-                    </button>
-                    <button type="button" className="profile-menu__item profile-menu__item--danger" onClick={handleLogout}>
-                      <LogoutOutlinedIcon fontSize="small" />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : isWorkerPortal ? (
-            <>
-              <Link to={workerHomeTarget} className="nav-link">
-                <DashboardCustomizeOutlinedIcon fontSize="small" />
-                <span>Worker Home</span>
-              </Link>
-              <Link to={workerOpenRequestsTarget} className="nav-link nav-link--primary">
-                <AssignmentOutlinedIcon fontSize="small" />
-                <span>Open Requests</span>
-              </Link>
-              <Link to={workerWorkTarget} className="nav-link">
-                <Inventory2OutlinedIcon fontSize="small" />
-                <span>My Work</span>
-              </Link>
-              <div className="profile-menu" ref={menuRef}>
-                <button
-                  type="button"
-                  className="nav-link nav-button profile-menu__trigger"
-                  onClick={() => setMenuOpen((previous) => !previous)}
-                  aria-expanded={menuOpen}
-                  aria-haspopup="menu"
-                >
-                  <PersonOutlineOutlinedIcon fontSize="small" />
-                  <span>{props.userName || "Worker"}</span>
-                  <KeyboardArrowDownRoundedIcon fontSize="small" />
-                </button>
-
-                {menuOpen && (
-                  <div className="profile-menu__panel" role="menu">
-                    <Link to={workerHomeTarget} className="profile-menu__item" onClick={() => setMenuOpen(false)}>
-                      <DashboardCustomizeOutlinedIcon fontSize="small" />
-                      <span>Worker Home</span>
-                    </Link>
-                    <Link to={workerOpenRequestsTarget} className="profile-menu__item" onClick={() => setMenuOpen(false)}>
-                      <AssignmentOutlinedIcon fontSize="small" />
-                      <span>Open Requests</span>
-                    </Link>
-                    <Link to="/profile" className="profile-menu__item" onClick={() => setMenuOpen(false)}>
-                      <PersonOutlineOutlinedIcon fontSize="small" />
-                      <span>View / Edit Profile</span>
-                    </Link>
                     <button type="button" className="profile-menu__item" onClick={toggleMode}>
                       {mode === "default" ? <DarkModeOutlinedIcon fontSize="small" /> : <WbSunnyOutlinedIcon fontSize="small" />}
                       <span>{mode === "default" ? "Enable Chill Mode" : "Switch to Light Mode"}</span>
